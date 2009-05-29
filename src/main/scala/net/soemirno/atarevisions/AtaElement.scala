@@ -4,7 +4,7 @@ import collection.mutable.HashMap
 import java.io.File
 import xml.{Node, Elem}
 
-object AtaDocument {
+object AtaElement {
   def apply(sourceFile: File) = {
     val document: Elem = {
       if (isValid(sourceFile))
@@ -12,7 +12,7 @@ object AtaDocument {
       else
         throw new IllegalArgumentException("use valid xml file")
     }
-    new AtaDocument(document)
+    new AtaElement(document)
   }
 
   def isValid(sourceFile: File): Boolean = {
@@ -22,28 +22,28 @@ object AtaDocument {
 
 }
 
-class AtaDocument(document: Elem) {
-  val keyedElements = (document \\ "_").filter(element => element \ "@key" != "")
+class AtaElement(element: Elem) {
+  val keyedElements = (element \\ "_").filter(element => element \ "@key" != "")
 
-  def changeList() = {
-    val changeList = new ChangeList
+  def revisionIndicators() = {
+    val list = new RevisionIndicators
     for (element <- keyedElements) {
-      changeList.add(Change(element))
+      list.add(RevisionIndicator(element))
     }
-    changeList
+    list
   }
 
-  def diff(otherDocument: AtaDocument, revisionDate: String) = {
-    val changeList = new ChangeList
-    val prevChanges = otherDocument.changeList
+  def diff(other: AtaElement, revisionDate: String) = {
+    val list = new RevisionIndicators
+    val prevChanges = other.revisionIndicators
 
-    for (key <- changeList().keys) {
+    for (key <- revisionIndicators().keys) {
       if (!prevChanges.contains(key) || prevChanges(key).changeType == "D") {
-        val change = Change(key, "N", revisionDate)
-        changeList.add(change)
+        val change = RevisionIndicator(key, "N", revisionDate)
+        list.add(change)
       }
     }
-    changeList
+    list
   }
 
 }

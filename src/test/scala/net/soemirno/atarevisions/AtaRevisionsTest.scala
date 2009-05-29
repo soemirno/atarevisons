@@ -9,7 +9,7 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
 
   def testCreateAtaDocumentWithNull() = {
     try {
-      AtaDocument(null)
+      AtaElement(null)
       fail("should throw exception")
     }
     catch {
@@ -19,7 +19,7 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
 
   def testCreateAtaDocumentWithInvalidFile() = {
     try {
-      AtaDocument(new File("some_file_which_does_not_exist"))
+      AtaElement(new File("some_file_which_does_not_exist"))
       fail("should throw exception")
     } catch {
       case iae: IllegalArgumentException =>
@@ -28,15 +28,15 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   }
 
   def testHasRevisedElements() = {
-    val previous = AtaDocument(PREVIOUS_SOURCE)
-    val current = AtaDocument(CURRENT_SOURCE)
+    val previous = AtaElement(PREVIOUS_SOURCE)
+    val current = AtaElement(CURRENT_SOURCE)
 
     //    Console.println("--- Previous ---" )
-    //    for (element <- previous.changeList)
+    //    for (element <- previous.revisionIndicators)
     //      Console.println(element )
     //
     Console.println("--- Current ---")
-    for (element <- current.changeList)
+    for (element <- current.revisionIndicators)
       Console.println(element)
 
     val changes = current.diff(previous, "20090201")
