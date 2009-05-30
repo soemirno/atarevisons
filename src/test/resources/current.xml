@@ -20,13 +20,15 @@
 				<graphic key="W8888880" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="003">
 					<sheet key="W8888881" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="003" sheetnbr="01" gnbr="A0255317" />
 				</graphic>
+                <graphic chapnbr="34" chg="x" gtype="WD" key="W0317650" pagenbr="011" revdate="TODOTODO" sectnbr="28" subjnbr="50"><effect effrg="378378 387388 394394 400401 409410 420424 429433 438439 441442 451451 453455 461461 463463 470470 473474 476476 487487 492496 500500 504505 509509 511513 516519 522523 527527" />
+                <title>INERTIAL REFERENCE SYSTEM SYSTEM 3 DATA INPUT</title><sheet chapnbr="34" chg="x" gnbr="d41553_165_aq" gtype="WD" key="W0317651" pagenbr="011" revdate="TODOTODO" sectnbr="28" sheetnbr="01" subjnbr="50"><effect effrg="378378 387388 394394 400401 409410 420424 429433 438439 441442 451451 453455 461461 463463 470470 473474 476476 487487 492496 500500 504505 509509 511513 516519 522523 527527" />
+                <title>D41553/165/AQ</title></sheet></graphic>
+                
 			</subject>
 		</section>
 	</chapter>
 	<eqiplist key="W0000012" chg="x" revdate="TODOTODO">
-		<eqrow chg="x" key="W0000013" revdate="TODOTODO">
-			<ein>A 0756B</ein>
-		</eqrow>
+		<eqrow chg="x" key="W0000013" revdate="TODOTODO"><ein>A 0756B</ein></eqrow>
 		<eqrow key="W0000014" chg="x" revdate="TODOTODO">
 			<ein />
 		</eqrow>

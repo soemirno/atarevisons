@@ -5,10 +5,14 @@ import java.io.File
 import xml.{Node, Elem}
 
 object AtaElement {
+  def apply(elem: Elem) = {
+    new AtaElement(elem)
+  }
+
   def apply(sourceFile: File) = {
     val document: Elem = {
       if (isValid(sourceFile))
-        xml.XML.loadFile(sourceFile)
+        xml.XML loadFile (sourceFile)
       else
         throw new IllegalArgumentException("use valid xml file")
     }
@@ -17,33 +21,99 @@ object AtaElement {
 
   def isValid(sourceFile: File): Boolean = {
     if (sourceFile == null) return false
-    sourceFile.exists
+    sourceFile exists
   }
 
 }
 
-class AtaElement(element: Elem) {
-  val keyedElements = (element \\ "_").filter(element => element \ "@key" != "")
+class AtaElement(elem: Elem) {
+  val keyedElems = (elem \\ "_") filter (element => element \ "@chg" != "")
+  val revs = revisions()
+  val visitedList = new RevisionIndicators
 
-  def revisionIndicators() = {
+  def element() = elem
+
+  def revisionIndicators() = revs
+
+  def keyedElements() = keyedElems
+
+  def revisions() = {
     val list = new RevisionIndicators
-    for (element <- keyedElements) {
-      list.add(RevisionIndicator(element))
+    for (element <- keyedElems) {
+      list add (RevisionIndicator(element))
     }
     list
   }
 
-  def diff(other: AtaElement, revisionDate: String) = {
-    val list = new RevisionIndicators
+  def diff(other: AtaElement, revisionDate: String): RevisionIndicators = {
     val prevChanges = other.revisionIndicators
+    for (rev <- revs.values)
+      compare(rev, prevChanges, revisionDate)
+    return visitedList
+  }
 
-    for (key <- revisionIndicators().keys) {
-      if (!prevChanges.contains(key) || prevChanges(key).changeType == "D") {
-        val change = RevisionIndicator(key, "N", revisionDate)
-        list.add(change)
+  def compare(rev: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Option[RevisionIndicator] = {
+    if (visitedList.contains(rev.key)) return None
+
+    Console.println("comparing " + rev.key)
+
+    if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D") {
+      val change = Some(RevisionIndicator(rev.key, "N", revisionDate, rev.element))
+      visitedList add change
+      return change
+    }
+    else if (rev.element.child.filter(n => n.isInstanceOf[Elem]).size !=
+            prevChanges(rev.key).element.child.filter(n => n.isInstanceOf[Elem]).size) {
+      val change = Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+      visitedList add change
+      return change
+    } else {
+      if (childHasChanged(rev, prevChanges, revisionDate)) {
+        val change = Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+        visitedList add change
+        return change
+      }
+      else {
+        return None
       }
     }
-    list
+
+  }
+
+  def childHasChanged(rev: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
+    var hasChanged = false
+    var prevParent = prevChanges(rev.key).element
+    for (child <- rev.element.child.filter(n => n.isInstanceOf[Elem])) {
+      if (child \ "@chg" != "") {
+        val key = (child \ "@key").text
+        val childRev = revs(key)
+        val change: Option[RevisionIndicator] = compare(childRev, prevChanges, revisionDate)
+        visitedList add change
+
+        if (!hasChanged) {
+          change match {
+            case Some(rei) => {
+              if (rei.changeType == "N" || rei.changeType == "R") hasChanged = true
+            }
+            case None =>
+          }
+        }
+      } else {
+        if (!hasChanged) {
+          val currentText = (rev.element \ child.label).text.trim
+          val prevText = (prevParent \ child.label).text.trim
+          Console.println("number of same elements for " + rev.key + ": " + child.label + ":  " + (prevParent \ child.label).size)
+          if (currentText != prevText) {
+            val change = Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+            visitedList add change
+            hasChanged = true
+          }
+        }
+      }
+
+    }
+    return hasChanged
+
   }
 
 }

@@ -7,15 +7,6 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   val PREVIOUS_SOURCE = new File(FIXTURES_FOLDER, "previous.xml")
   val CURRENT_SOURCE = new File(FIXTURES_FOLDER, "current.xml")
 
-  def testCreateAtaDocumentWithNull() = {
-    try {
-      AtaElement(null)
-      fail("should throw exception")
-    }
-    catch {
-      case iae: IllegalArgumentException =>
-    }
-  }
 
   def testCreateAtaDocumentWithInvalidFile() = {
     try {
@@ -35,20 +26,34 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
     //    for (element <- previous.revisionIndicators)
     //      Console.println(element )
     //
-    Console.println("--- Current ---")
-    for (element <- current.revisionIndicators)
-      Console.println(element)
+//        Console.println("--- Current ---")
+//        for (element <- current.revisionIndicators)
+//          Console.println(element)
 
     val changes = current.diff(previous, "20090201")
 
     Console.println("--- Changes ---")
     for (change <- changes)
-      Console.println(change)
+      Console.println("detected: "  + change)
+
     assert(changes.keySet.contains("W0000019"))
+
+    assert(!changes.keySet.contains("W0317651"))
+    assert(changes.keySet.contains("W0317650"))
+
+
+    //content change
+    assert(changes.keySet.contains("W0000013"))
+    assert(changes("W0000013").changeType == "R")
+    assert(changes("W0000013").date == "20090201")
+
     assert(changes("W0000019").changeType == "N")
     assert(changes("W0000019").date == "20090201")
 
     assert(changes("W0000002").changeType == "N")
     assert(changes("W0000002").date == "20090201")
+
+    assert(changes("W0000006").changeType == "R")
+    assert(changes("W0000006").date == "20090201")
   }
 }
