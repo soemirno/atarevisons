@@ -119,6 +119,15 @@ class AtaElement(elem: Elem) {
         return true
       }
     }
+
+    val previousChildren = prevChanges(parent.key).children.filter(n => n \ "@chg" =="")
+
+    for (child  <- parent.children if (child \ "@chg" == "")) {
+        val label = child.label
+        val curChilds = parent.children.filter(n => n.label == label)
+        val prevChilds = previousChildren.filter(n => n.label == label)
+        if (curChilds.size != prevChilds.size) return true
+    }
     return false
 
   }
