@@ -25,6 +25,11 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
     val changes = AtaElement(CURRENT_SOURCE).diff(AtaElement(PREVIOUS_SOURCE), "20090201")
     val checks = AtaElement(RESULT_SOURCE).revisionIndicators
 
+    for (check <- checks.values){
+      if (check.changeType != "U" && !changes.contains(check.key))
+        Console.println ("not found: " + check.key + " is " + check.changeType)
+    }
+
     Console.println("--- Changes ---")
     for (change :RevisionIndicator <- changes.values){
       Console.println("detected: "  + change.key + "," + change.changeType)
@@ -35,6 +40,5 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
       else if (change.changeType != checks(change.key).changeType)
         Console.println("expected: " + change.key + ","  + checks(change.key).changeType)
     }
-
   }
 }
