@@ -80,11 +80,9 @@ class AtaElement(elem: Elem) {
   }
 
   def childHasChanged(parent: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
-    if (visitedList.contains(parent.key)) return false
-
     for (child <- parent.children if (child \ "@chg" != "")) {
       val key = (child \ "@key").text
-
+      if (visitedList.contains(key)) return true
       if (childHasChanged(revs(key), prevChanges, revisionDate)) {
         visitedList add Some(RevisionIndicator(key, "R", revisionDate, revs(key).element))
         return true
