@@ -77,6 +77,14 @@ class AtaElement(elem: Elem) {
     val previousSB = (previous \ "effect" \"sbeff").filter(n => n.isInstanceOf[Elem])
 
     if (currentSB.size != previousSB.size) return true
+
+    for (sb <- currentSB) {
+      val sbnbr = (sb \ "@sbnbr").text
+      val sbcond = (sb \ "@sbcond").text
+      val prevSbItem = previousSB.filter(n => (n \ "@sbnbr").text == sbnbr && (n \ "@sbcond").text == sbcond)
+      if (prevSbItem.size == 0) return true
+      if ((prevSbItem \ "@effrg").text != (sb\ "@effrg").text) return true
+    }
     
     false
   }
