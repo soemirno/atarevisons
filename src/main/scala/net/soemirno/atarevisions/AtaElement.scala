@@ -122,11 +122,12 @@ class AtaElement(elem: Elem) {
 
     val previousChildren = prevChanges(parent.key).children.filter(n => n \ "@chg" =="")
 
+    var index = 0
     for (child  <- parent.children if (child \ "@chg" == "")) {
-        val label = child.label
-        val curChilds = parent.children.filter(n => n.label == label)
-        val prevChilds = previousChildren.filter(n => n.label == label)
-        if (curChilds.size != prevChilds.size) return true
+        val prevChild = previousChildren(index)
+        if (prevChild.label != child.label) return true
+        if (prevChild.text.trim != child.text.trim ) return true
+        index = index + 1
     }
     return false
 
