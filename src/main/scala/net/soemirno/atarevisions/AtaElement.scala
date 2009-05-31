@@ -47,6 +47,7 @@ class AtaElement(elem: Elem) {
     findChangedLength(prevChanges, revisionDate)
     findChangedEffectivity(prevChanges, revisionDate)
     findChangedInChildren(prevChanges, revisionDate)
+    findDeleted(prevChanges, revisionDate)
     return visitedList
   }
 
@@ -55,6 +56,14 @@ class AtaElement(elem: Elem) {
       Console.println("comparing new " + rev.key)
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
         visitedList add Some(RevisionIndicator(rev.key, "N", revisionDate, rev.element))
+    }
+  }
+
+  def findDeleted(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
+    for (rev <- prevChanges.values if !visitedList.contains(rev.key)) {
+      Console.println("comparing deleted " + rev.key)
+      if (!revs.contains(rev.key()) )
+        visitedList add Some(RevisionIndicator(rev.key, "D", revisionDate, rev.element))
     }
   }
 
