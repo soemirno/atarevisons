@@ -11,7 +11,9 @@
 				<graphic key="W0000007" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="001">
 					<sheet key="W0000008" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="001" sheetnbr="01" gnbr="A0019410" />
 					<sheet key="W0000009" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="001" sheetnbr="02" gnbr="A0019411">
-						<effect effrg="100123 204288 495521 522999" />
+						<effect effrg="100123 204288 495999">
+                            <sbeff effrg="359359 361362 367367 396397 404404" sbcond="POST" sbnbr="SBF100-21-043"/>
+                        </effect>
 					</sheet>
 				</graphic>
 				<graphic key="W0000010" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="002">
