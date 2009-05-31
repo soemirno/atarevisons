@@ -62,13 +62,23 @@ class AtaElement(elem: Elem) {
     for (rev <- revs.values if !visitedList.contains(rev.key)) {
       Console.println("comparing effectivities " + rev.key)
 
-      val currentEffectivity = (rev.element \ "effect" \ "@effrg").text
-      val previousEffectivity = (prevChanges(rev.key).element \ "effect" \ "@effrg").text
-
-      if (currentEffectivity != previousEffectivity)
+      if (hasEffectivityChanges(rev.element, prevChanges(rev.key).element))
         visitedList add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
 
     }
+  }
+
+  def hasEffectivityChanges(current :Elem, previous :Elem) :Boolean = {
+    val currentEffectivity = (current \ "effect" \ "@effrg").text
+    val previousEffectivity = (previous \ "effect" \ "@effrg").text
+    if (currentEffectivity != previousEffectivity) return true
+
+    val currentSB = (current \ "effect" \"sbeff").filter(n => n.isInstanceOf[Elem])
+    val previousSB = (previous \ "effect" \"sbeff").filter(n => n.isInstanceOf[Elem])
+
+    if (currentSB.size != previousSB.size) return true
+    
+    false
   }
 
   def findChangedLength(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
@@ -93,18 +103,15 @@ class AtaElement(elem: Elem) {
   }
 
   def childHasChanged(parent: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
-    var hasChanged = false
     for (child <- parent.children if (child \ "@chg" != "")) {
       val key = (child \ "@key").text
-      if (visitedList.contains(key)) {
-        hasChanged = true
-      }
-      else if (childHasChanged(revs(key), prevChanges, revisionDate)) {
+      if (visitedList.contains(key)) return true
+      if (childHasChanged(revs(key), prevChanges, revisionDate)) {
         visitedList add Some(RevisionIndicator(key, "R", revisionDate, revs(key).element))
-        hasChanged = true
+        return true
       }
     }
-    return hasChanged
+    return false
 
   }
 
