@@ -79,37 +79,18 @@ class AtaElement(elem: Elem) {
     }
   }
 
-  def childHasChanged(rev: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
-    if (visitedList.contains(rev.key)) {
-      val change = visitedList(rev.key)
-      return (change.changeType != "U")
-    }
-    var hasChanged = false
-    var prevParent = prevChanges(rev.key).element
-    for (child <- rev.children) {
-      if (child \ "@chg" != "") {
-        val key = (child \ "@key").text
-        val childRev = revs(key)
+  def childHasChanged(parent: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
+    if (visitedList.contains(parent.key)) return false
 
-        if (childHasChanged(childRev, prevChanges, revisionDate)) {
-          visitedList add Some(RevisionIndicator(childRev.key, "R", revisionDate, rev.element))
-          hasChanged = true
-        }
+    for (child <- parent.children if (child \ "@chg" != "")) {
+      val key = (child \ "@key").text
 
-      } else {
-        if (!hasChanged) {
-          val currentText = (rev.element \ child.label).text.trim
-          val prevText = (prevParent \ child.label).text.trim
-          if (currentText != prevText) {
-            val change = Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
-            visitedList add change
-            hasChanged = true
-          }
-        }
+      if (childHasChanged(revs(key), prevChanges, revisionDate)) {
+        visitedList add Some(RevisionIndicator(key, "R", revisionDate, revs(key).element))
+        return true
       }
-
     }
-    return hasChanged
+    return false
 
   }
 
