@@ -84,6 +84,10 @@ class AtaElement(elem: Elem) {
   }
 
   def childHasChanged(rev: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
+    if (visitedList.contains(rev.key)) {
+      val change = visitedList(rev.key)
+      return (change.changeType != "U" )       
+    }
     var hasChanged = false
     var prevParent = prevChanges(rev.key).element
     for (child <- rev.children) {
