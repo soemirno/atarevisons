@@ -45,8 +45,7 @@ class AtaElement(elem: Elem) {
     val prevChanges = other.revisionIndicators
     findNew(prevChanges, revisionDate)
     findChangedLength(prevChanges, revisionDate)
-    for (rev <- revs.values)
-      compare(rev, prevChanges, revisionDate)
+    findChangedInChildren(prevChanges, revisionDate)
     return visitedList
   }
 
@@ -72,21 +71,18 @@ class AtaElement(elem: Elem) {
   }
 
 
-  def compare(rev: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Option[RevisionIndicator] = {
-    if (visitedList.contains(rev.key)) return None
-    Console.println("comparing children " + rev.key)
-    if (childHasChanged(rev, prevChanges, revisionDate)) {
-      return Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
-    }
-    else {
-      return None
+  def findChangedInChildren(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
+    for (rev <- revs.values if !visitedList.contains(rev.key)) {
+      Console.println("comparing children " + rev.key)
+      if (childHasChanged(rev, prevChanges, revisionDate))
+        visitedList add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
     }
   }
 
   def childHasChanged(rev: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
     if (visitedList.contains(rev.key)) {
       val change = visitedList(rev.key)
-      return (change.changeType != "U" )       
+      return (change.changeType != "U")
     }
     var hasChanged = false
     var prevParent = prevChanges(rev.key).element
@@ -95,7 +91,6 @@ class AtaElement(elem: Elem) {
         val key = (child \ "@key").text
         val childRev = revs(key)
 
-        val change: Option[RevisionIndicator] = compare(childRev, prevChanges, revisionDate)
         if (childHasChanged(childRev, prevChanges, revisionDate)) {
           visitedList add Some(RevisionIndicator(childRev.key, "R", revisionDate, rev.element))
           hasChanged = true
