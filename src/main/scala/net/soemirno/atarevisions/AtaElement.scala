@@ -2,8 +2,7 @@ package net.soemirno.atarevisions
 
 import collection.mutable.HashMap
 import java.io.File
-import xml.{Node, Elem}
-
+import xml.{NodeSeq, Node, Elem}
 object AtaElement {
   def apply(elem: Elem) = {
     new AtaElement(elem)
@@ -27,23 +26,20 @@ object AtaElement {
 }
 
 class AtaElement(elem: Elem) {
-  val keyedElems = (elem \\ "_") filter (element => element \ "@chg" != "")
-  val revs = revisions()
-  val visitedList = new RevisionIndicators
 
-  def element() = elem
-
-  def revisionIndicators() = revs
-
-  def keyedElements() = keyedElems
-
-  def revisions() = {
+  private val revs = {
+    val keyedElems = (elem \\ "_") filter (element => element \ "@chg" != "")
     val list = new RevisionIndicators
-    for (element <- keyedElems) {
+    for (element <- keyedElems)
       list add (RevisionIndicator(element))
-    }
     list
   }
+
+  private val visitedList = new RevisionIndicators
+
+  def element(): Elem = elem
+
+  def revisionIndicators(): RevisionIndicators = revs
 
   def diff(other: AtaElement, revisionDate: String): RevisionIndicators = {
     val prevChanges = other.revisionIndicators
@@ -102,7 +98,7 @@ class AtaElement(elem: Elem) {
         if (!hasChanged) {
           val currentText = (rev.element \ child.label).text.trim
           val prevText = (prevParent \ child.label).text.trim
-          Console.println("number of same elements for " + rev.key + ": " + child.label + ":  " + (prevParent \ child.label).size)
+//          Console.println("number of same elements for " + rev.key + ": " + child.label + ":  " + (prevParent \ child.label).size)
           if (currentText != prevText) {
             val change = Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
             visitedList add change

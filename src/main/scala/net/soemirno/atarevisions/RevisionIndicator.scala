@@ -24,5 +24,5 @@ class RevisionIndicator(key: String, changeType: String, date: String, elem: Ele
 
   def date(): String = date
 
-  override def toString(): String = key + " = " + changeType + "," + date
+  override def toString(): String = key + "," + changeType + "," + date
 }

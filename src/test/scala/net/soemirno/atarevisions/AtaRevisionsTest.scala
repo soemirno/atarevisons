@@ -1,12 +1,13 @@
 package net.soemirno.atarevisions
 
+import collection.mutable.HashMap
 import java.io.File
 import org.scalatest.junit.JUnit3Suite
 
 class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   val PREVIOUS_SOURCE = new File(FIXTURES_FOLDER, "previous.xml")
   val CURRENT_SOURCE = new File(FIXTURES_FOLDER, "current.xml")
-
+  val RESULT_SOURCE = new File(FIXTURES_FOLDER, "result.xml")
 
   def testCreateAtaDocumentWithInvalidFile() = {
     try {
@@ -18,42 +19,22 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
 
   }
 
+
   def testHasRevisedElements() = {
-    val previous = AtaElement(PREVIOUS_SOURCE)
-    val current = AtaElement(CURRENT_SOURCE)
 
-    //    Console.println("--- Previous ---" )
-    //    for (element <- previous.revisionIndicators)
-    //      Console.println(element )
-    //
-//        Console.println("--- Current ---")
-//        for (element <- current.revisionIndicators)
-//          Console.println(element)
-
-    val changes = current.diff(previous, "20090201")
+    val changes = AtaElement(CURRENT_SOURCE).diff(AtaElement(PREVIOUS_SOURCE), "20090201")
+    val checks = AtaElement(RESULT_SOURCE).revisionIndicators
 
     Console.println("--- Changes ---")
-    for (change <- changes)
-      Console.println("detected: "  + change)
+    for (change :RevisionIndicator <- changes.values){
+      Console.println("detected: "  + change.key + "," + change.changeType)
 
-    assert(changes.keySet.contains("W0000019"))
+      if (!checks.contains(change.key))
+        Console.println("missing: "  + change.key + "," + change.changeType)
 
-    assert(!changes.keySet.contains("W0317651"))
-    assert(changes.keySet.contains("W0317650"))
+      else if (change.changeType != checks(change.key).changeType)
+        Console.println("expected: " + change.key + ","  + checks(change.key).changeType)
+    }
 
-
-    //content change
-    assert(changes.keySet.contains("W0000013"))
-    assert(changes("W0000013").changeType == "R")
-    assert(changes("W0000013").date == "20090201")
-
-    assert(changes("W0000019").changeType == "N")
-    assert(changes("W0000019").date == "20090201")
-
-    assert(changes("W0000002").changeType == "N")
-    assert(changes("W0000002").date == "20090201")
-
-    assert(changes("W0000006").changeType == "R")
-    assert(changes("W0000006").date == "20090201")
   }
 }
