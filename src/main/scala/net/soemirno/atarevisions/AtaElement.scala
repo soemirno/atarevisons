@@ -76,14 +76,13 @@ class AtaElement(elem: Elem) {
       Console.println("comparing length " + rev.key)
 
       val currentLength = rev.children.size
-      val previousLenght = prevChanges(rev.key).children.size
+      val previousLength = prevChanges(rev.key).children.size
 
-      if (currentLength != previousLenght)
+      if (currentLength != previousLength)
         visitedList add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
 
     }
   }
-
 
   def findChangedInChildren(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
     for (rev <- revs.values if !visitedList.contains(rev.key)) {
@@ -94,15 +93,18 @@ class AtaElement(elem: Elem) {
   }
 
   def childHasChanged(parent: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
+    var hasChanged = false
     for (child <- parent.children if (child \ "@chg" != "")) {
       val key = (child \ "@key").text
-      if (visitedList.contains(key)) return true 
-      if (childHasChanged(revs(key), prevChanges, revisionDate)) {
+      if (visitedList.contains(key)) {
+        hasChanged = true
+      }
+      else if (childHasChanged(revs(key), prevChanges, revisionDate)) {
         visitedList add Some(RevisionIndicator(key, "R", revisionDate, revs(key).element))
-        return true
+        hasChanged = true
       }
     }
-    return false
+    return hasChanged
 
   }
 
