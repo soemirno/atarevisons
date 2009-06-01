@@ -214,7 +214,7 @@ class AtaElement(elem: Elem) {
 
     return ((thatElem.prefix == thisElem.prefix)
             && (thatElem.label == thisElem.label)
-            && (thatElem.attributes == thisElem.attributes)
+            && (thatElem.attributes.filter(a => a.key != "chg" && a.key != "revdate") == thisElem.attributes.filter(a => a.key != "chg" && a.key != "revdate") )
             && hasSameChildren(thatElem.child,thisElem.child)
             )
   }

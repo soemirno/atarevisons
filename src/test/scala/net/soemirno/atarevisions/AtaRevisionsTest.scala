@@ -48,7 +48,7 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
 
     return ((thatElem.prefix == thisElem.prefix)
             && (thatElem.label == thisElem.label)
-            && (thatElem.attributes == thisElem.attributes)
+            && (thatElem.attributes.filter(a => a.key != "chg" && a.key != "revdate") == thisElem.attributes.filter(a => a.key != "chg" && a.key != "revdate") )
             && hasSameChildren(thatElem.child,thisElem.child)
             )
   }
@@ -66,10 +66,10 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
 
   def testElemEquals() = {
 
-    val thisElem = <root><dd a='a' b='b'>hallo</dd>
+    val thisElem = <root chg="U" revdate="20090512"><dd a='a' b='b'>hallo</dd>
 <ee><ff/>
 <ff/></ee></root>
-    val thatElem = <root><dd b='b' a='a'>hallo</dd><ee><ff/><ff/></ee></root>
+    val thatElem = <root chg="x" revdate="TODOTODO"><dd b='b' a='a'>hallo</dd><ee><ff/><ff/></ee></root>
 
     for (e <- thisElem.elements)
       Console.println(e)
