@@ -1,8 +1,7 @@
 package net.soemirno.atarevisions
 
 import java.io.File
-import xml.Elem
-
+import xml.{Text, Node, NodeSeq, Elem}
 object AtaElement {
   def apply(elem: Elem) = {
     new AtaElement(elem)
@@ -42,9 +41,7 @@ class AtaElement(elem: Elem) {
     val previousIndicators = previous.revisionIndicators
 
     result ++ findNew ( previousIndicators, revisionDate, result)
-    result ++ findLengthChanges ( previousIndicators, revisionDate, result)
-    result ++ findEffectivityChanges ( previousIndicators, revisionDate, result)
-    result ++ findChildrenChanges ( previousIndicators, revisionDate, result)
+    result ++ findChildrenChangesBruteForce ( previousIndicators, revisionDate, result)
     result ++ findDeleted ( previousIndicators, revisionDate, result)
 
     return result
@@ -59,7 +56,7 @@ class AtaElement(elem: Elem) {
       Console.println("finding new " + rev.key)
 
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result add Some(RevisionIndicator(rev.key, "N", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "N", revisionDate, rev))
     }
 
     return result
@@ -74,7 +71,7 @@ class AtaElement(elem: Elem) {
       Console.println("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
-        result add Some(RevisionIndicator(rev.key, "D", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "D", revisionDate, rev))
     }
 
     return result
@@ -88,15 +85,15 @@ class AtaElement(elem: Elem) {
     for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
       Console.println("finding effectivity changes " + rev.key)
 
-      if (hasEffectivityChanges(rev.element, prevChanges(rev.key).element))
-        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+      if (hasEffectivityChanges(rev, prevChanges(rev.key)))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
 
     }
 
     return result
   }
 
-  def hasEffectivityChanges(current: Elem, previous: Elem): Boolean = {
+  def hasEffectivityChanges(current: RevisionIndicator, previous: RevisionIndicator): Boolean = {
     val currentEffectElem = current \ "effect"
     val previousEffectElem = previous \ "effect"
 
@@ -118,7 +115,7 @@ class AtaElement(elem: Elem) {
              n \ "@sbcond" == sb \ "@sbcond"
         )
       if (prevSbItem.size == 0) return true
-      if (prevSbItem \ "@effrg" != sb \ "@effrg") return true
+      if (prevSbItem != sb) return true
     }
 
     val currentCoc = currentEffectElem \ "coceff"
@@ -129,7 +126,7 @@ class AtaElement(elem: Elem) {
     for (coc <- currentCoc) {
       val prevCocItem = previousCoc.filter(n => n \ "@cocnbr" == coc \ "@cocnbr")
       if (prevCocItem.size == 0) return true
-      if (prevCocItem \ "@effrg" != coc \ "@effrg") return true
+      if (prevCocItem != coc) return true
     }
 
     return false
@@ -147,7 +144,7 @@ class AtaElement(elem: Elem) {
       val previousLength = prevChanges(rev.key).children.size
 
       if (currentLength != previousLength)
-        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
 
     }
 
@@ -163,7 +160,21 @@ class AtaElement(elem: Elem) {
       Console.println("finding children changes" + rev.key)
 
       if (childHasChanged(rev, prevChanges, revisionDate, foundChanges))
-        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+    }
+    return result
+  }
+
+  def findChildrenChangesBruteForce(prevChanges: RevisionIndicators,
+                          revisionDate: String,
+                          foundChanges: RevisionIndicators): RevisionIndicators =  {
+    val result = new RevisionIndicators
+
+    for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
+      Console.println("finding children changes" + rev.key)
+
+      if (!equalsWithoutText(rev, prevChanges(rev.key)))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
     }
     return result
   }
@@ -196,5 +207,27 @@ class AtaElement(elem: Elem) {
 
     return false
   }
+
+  def equalsWithoutText(thisElem: Node, thatElem: Node): Boolean = {
+    if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text])
+      return thisElem.text == thatElem.text
+
+    return ((thatElem.prefix == thisElem.prefix)
+            && (thatElem.label == thisElem.label)
+            && (thatElem.attributes == thisElem.attributes)
+            && hasSameChildren(thatElem.child,thisElem.child)
+            )
+  }
+
+  def hasSameChildren(a :NodeSeq, b :NodeSeq):Boolean = {
+    val ita = a.filter(e => e.isInstanceOf[Elem]).elements
+    val itb = b.filter(e => e.isInstanceOf[Elem]).elements
+    var res = true
+    while (res && ita.hasNext && itb.hasNext) {
+      res = (equalsWithoutText(ita.next, itb.next))
+    }
+    !ita.hasNext && !itb.hasNext && res
+  }
+
 
 }
