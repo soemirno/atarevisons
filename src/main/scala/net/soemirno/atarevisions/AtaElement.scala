@@ -62,7 +62,7 @@ class AtaElement(elem: Elem) {
   def findDeleted(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
     for (rev <- prevChanges.values if !visitedList.contains(rev.key)) {
       Console.println("comparing deleted " + rev.key)
-      if (!revs.contains(rev.key()) )
+      if (!revs.contains(rev.key()))
         visitedList add Some(RevisionIndicator(rev.key, "D", revisionDate, rev.element))
     }
   }
@@ -77,36 +77,42 @@ class AtaElement(elem: Elem) {
     }
   }
 
-  def hasEffectivityChanges(current :Elem, previous :Elem) :Boolean = {
-    val currentEffectivity = (current \ "effect" \ "@effrg").text
-    val previousEffectivity = (previous \ "effect" \ "@effrg").text
+  def hasEffectivityChanges(current: Elem, previous: Elem): Boolean = {
+    val currentEffectElem = current \ "effect"
+    val previousEffectElem = previous \ "effect"
+
+    if (currentEffectElem.size == 0 && previousEffectElem.size == 0) return false
+
+    val currentEffectivity = (currentEffectElem \ "@effrg").text
+    val previousEffectivity = (previousEffectElem \ "@effrg").text
     if (currentEffectivity != previousEffectivity) return true
 
-    val currentSB = (current \ "effect" \"sbeff")
-    val previousSB = (previous \ "effect" \"sbeff")
+    val currentSB = (currentEffectElem \ "sbeff")
+    val previousSB = (previousEffectElem \ "sbeff")
 
     if (currentSB.size != previousSB.size) return true
 
     for (sb <- currentSB) {
-      val sbnbr = (sb \ "@sbnbr").text
-      val sbcond = (sb \ "@sbcond").text
-      val prevSbItem = previousSB.filter(n => (n \ "@sbnbr").text == sbnbr && (n \ "@sbcond").text == sbcond)
+      val prevSbItem = previousSB.filter(
+        n => (n \ "@sbnbr").text == (sb \ "@sbnbr").text &&
+             (n \ "@sbcond").text == (sb \ "@sbcond").text
+        )
       if (prevSbItem.size == 0) return true
-      if ((prevSbItem \ "@effrg").text != (sb\ "@effrg").text) return true
+      if ((prevSbItem \ "@effrg").text != (sb \ "@effrg").text) return true
     }
 
-    val currentCoc = (current \ "effect" \"coceff")
-    val previousCoc = (previous \ "effect" \"coceff")
+    val currentCoc = (currentEffectElem \ "coceff")
+    val previousCoc = (previousEffectElem \ "coceff")
 
     if (currentCoc.size != previousCoc.size) return true
 
-    for (coc <- currentCoc  ) {
-      val prevCocItem = previousCoc.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
+    for (coc <- currentCoc) {
+      val prevCocItem = previousCoc.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text)
       if (prevCocItem.size == 0) return true
-      if ((prevCocItem \ "@effrg").text != (coc\ "@effrg").text) return true
+      if ((prevCocItem \ "@effrg").text != (coc \ "@effrg").text) return true
     }
 
-    false
+    return false
   }
 
   def findChangedLength(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
@@ -140,14 +146,14 @@ class AtaElement(elem: Elem) {
       }
     }
 
-    val previousChildren = prevChanges(parent.key).children.filter(n => n \ "@chg" =="")
+    val previousChildren = prevChanges(parent.key).children.filter(n => n \ "@chg" == "")
 
     var index = 0
-    for (child  <- parent.children if (child \ "@chg" == "")) {
-        val prevChild = previousChildren(index)
-        if (prevChild.label != child.label) return true
-        if (prevChild.text.trim != child.text.trim ) return true
-        index = index + 1
+    for (child <- parent.children if (child \ "@chg" == "")) {
+      val prevChild = previousChildren(index)
+      if (prevChild.label != child.label) return true
+      if (prevChild.text.trim != child.text.trim) return true
+      index = index + 1
     }
     return false
 
