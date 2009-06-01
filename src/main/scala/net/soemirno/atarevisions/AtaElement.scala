@@ -98,8 +98,6 @@ class AtaElement(elem: Elem) {
     val currentCoc = (current \ "effect" \"coceff").filter(n => n.isInstanceOf[Elem])
     val previousCoc = (previous \ "effect" \"coceff").filter(n => n.isInstanceOf[Elem])
 
-    if (currentSB.size != previousSB.size) return true
-
     for (coc <- currentCoc  ) {
       val prevCocItem = previousCoc.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
       if (prevCocItem.size == 0) return true
