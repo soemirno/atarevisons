@@ -211,7 +211,7 @@ class AtaElement(elem: Elem) {
   def equalsWithoutText(thisElem: Node, thatElem: Node): Boolean = {
     val ignoreList = List("chg", "revdate", "targetrefid")
     if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text])
-      return thisElem.text == thatElem.text
+      return thisElem.text.trim == thatElem.text.trim
 
     return ((thatElem.prefix == thisElem.prefix)
             && (thatElem.label == thisElem.label)
