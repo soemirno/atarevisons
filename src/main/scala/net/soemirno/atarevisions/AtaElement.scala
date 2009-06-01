@@ -171,7 +171,7 @@ class AtaElement(elem: Elem) {
     val result = new RevisionIndicators
 
     for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
-      Console.println("finding children changes" + rev.key)
+      Console.println("finding children changes " + rev.key)
 
       if (!equalsWithoutText(rev, prevChanges(rev.key)))
         result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
@@ -210,15 +210,15 @@ class AtaElement(elem: Elem) {
 
   def equalsWithoutText(thisElem: Node, thatElem: Node): Boolean = {
     val ignoreList = List("chg", "revdate", "targetrefid")
-    if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text])
-      return thisElem.text.trim == thatElem.text.trim
+    val tagIsEqual = ((thatElem.prefix == thisElem.prefix)
+              && (thatElem.label == thisElem.label)
+              && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
+              thisElem.attributes.filter(a => !ignoreList.contains(a.key))))
 
-    return ((thatElem.prefix == thisElem.prefix)
-            && (thatElem.label == thisElem.label)
-            && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
-                thisElem.attributes.filter(a => !ignoreList.contains(a.key)))
-            && hasSameChildren(thatElem.child,thisElem.child)
-            )
+    if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text])
+      return tagIsEqual &&  thisElem.text.trim == thatElem.text.trim
+
+    return tagIsEqual && hasSameChildren(thatElem.child, thisElem.child)
   }
 
   def hasSameChildren(a :NodeSeq, b :NodeSeq):Boolean = {
