@@ -84,6 +84,9 @@ class AtaElement(elem: Elem) {
 
     val currentSB = (current \ "effect" \"sbeff")
     val previousSB = (previous \ "effect" \"sbeff")
+
+    if (currentSB.size != previousSB.size) return true
+
     for (sb <- currentSB) {
       val sbnbr = (sb \ "@sbnbr").text
       val sbcond = (sb \ "@sbcond").text
@@ -94,6 +97,9 @@ class AtaElement(elem: Elem) {
 
     val currentCoc = (current \ "effect" \"coceff")
     val previousCoc = (previous \ "effect" \"coceff")
+
+    if (currentCoc.size != previousCoc.size) return true
+
     for (coc <- currentCoc  ) {
       val prevCocItem = previousCoc.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
       if (prevCocItem.size == 0) return true
