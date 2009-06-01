@@ -82,11 +82,8 @@ class AtaElement(elem: Elem) {
     val previousEffectivity = (previous \ "effect" \ "@effrg").text
     if (currentEffectivity != previousEffectivity) return true
 
-    val currentSB = (current \ "effect" \"sbeff").filter(n => n.isInstanceOf[Elem])
-    val previousSB = (previous \ "effect" \"sbeff").filter(n => n.isInstanceOf[Elem])
-
-    if (currentSB.size != previousSB.size) return true
-
+    val currentSB = (current \ "effect" \"sbeff")
+    val previousSB = (previous \ "effect" \"sbeff")
     for (sb <- currentSB) {
       val sbnbr = (sb \ "@sbnbr").text
       val sbcond = (sb \ "@sbcond").text
@@ -95,11 +92,8 @@ class AtaElement(elem: Elem) {
       if ((prevSbItem \ "@effrg").text != (sb\ "@effrg").text) return true
     }
 
-    val currentCoc = (current \ "effect" \"coceff").filter(n => n.isInstanceOf[Elem])
-    val previousCoc = (previous \ "effect" \"coceff").filter(n => n.isInstanceOf[Elem])
-
-    if (currentSB.size != previousSB.size) return true
-
+    val currentCoc = (current \ "effect" \"coceff")
+    val previousCoc = (previous \ "effect" \"coceff")
     for (coc <- currentCoc  ) {
       val prevCocItem = previousCoc.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
       if (prevCocItem.size == 0) return true
