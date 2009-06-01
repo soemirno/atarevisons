@@ -94,7 +94,18 @@ class AtaElement(elem: Elem) {
       if (prevSbItem.size == 0) return true
       if ((prevSbItem \ "@effrg").text != (sb\ "@effrg").text) return true
     }
-    
+
+    val currentCoc = (current \ "effect" \"coceff").filter(n => n.isInstanceOf[Elem])
+    val previousCoc = (previous \ "effect" \"coceff").filter(n => n.isInstanceOf[Elem])
+
+    if (currentSB.size != previousSB.size) return true
+
+    for (coc <- currentCoc  ) {
+      val prevCocItem = previousSB.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
+      if (prevCocItem.size == 0) return true
+      if ((prevCocItem \ "@effrg").text != (coc\ "@effrg").text) return true
+    }
+
     false
   }
 
