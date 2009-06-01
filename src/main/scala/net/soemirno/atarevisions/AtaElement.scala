@@ -101,7 +101,7 @@ class AtaElement(elem: Elem) {
     if (currentSB.size != previousSB.size) return true
 
     for (coc <- currentCoc  ) {
-      val prevCocItem = previousSB.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
+      val prevCocItem = previousCoc.filter(n => (n \ "@cocnbr").text == (coc \ "@cocnbr").text )
       if (prevCocItem.size == 0) return true
       if ((prevCocItem \ "@effrg").text != (coc\ "@effrg").text) return true
     }
