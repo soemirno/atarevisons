@@ -27,7 +27,8 @@ object AtaElement {
 }
 
 class AtaElement(elem: Elem) {
-  private val revs = {
+
+  private val revIndicators = {
     val keyedElems = (elem \\ "_") filter (element => element \ "@chg" != "")
     val list = new RevisionIndicators
     for (element <- keyedElems)
@@ -35,46 +36,51 @@ class AtaElement(elem: Elem) {
     list
   }
 
-  private val visitedList = new RevisionIndicators
-
   def element(): Elem = elem
 
-  def revisionIndicators(): RevisionIndicators = revs
+  def revisionIndicators(): RevisionIndicators = revIndicators
 
   def diff(other: AtaElement, revisionDate: String): RevisionIndicators = {
+    val visitedList = new RevisionIndicators
     val prevChanges = other.revisionIndicators
-    findNew(prevChanges, revisionDate)
-    findChangedLength(prevChanges, revisionDate)
-    findChangedEffectivity(prevChanges, revisionDate)
-    findChangedInChildren(prevChanges, revisionDate)
-    findDeleted(prevChanges, revisionDate)
+    visitedList ++ findNew(prevChanges, revisionDate, visitedList)
+    visitedList ++ findChangedLength(prevChanges, revisionDate, visitedList)
+    visitedList ++ findChangedEffectivity(prevChanges, revisionDate, visitedList)
+    visitedList ++ findChangedInChildren(prevChanges, revisionDate, visitedList)
+    visitedList ++ findDeleted(prevChanges, revisionDate, visitedList)
     return visitedList
   }
 
-  def findNew(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
-    for (rev <- revs.values if !visitedList.contains(rev.key)) {
+  def findNew(prevChanges: RevisionIndicators, revisionDate: String, visitedList: RevisionIndicators): RevisionIndicators = {
+    val result = new RevisionIndicators
+    for (rev <- revIndicators.values if !visitedList.contains(rev.key)) {
       Console.println("comparing new " + rev.key)
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        visitedList add Some(RevisionIndicator(rev.key, "N", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "N", revisionDate, rev.element))
     }
+    result
   }
 
-  def findDeleted(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
+  def findDeleted(prevChanges: RevisionIndicators, revisionDate: String, visitedList: RevisionIndicators): RevisionIndicators = {
+    val result = new RevisionIndicators
     for (rev <- prevChanges.values if !visitedList.contains(rev.key)) {
       Console.println("comparing deleted " + rev.key)
-      if (!revs.contains(rev.key()))
-        visitedList add Some(RevisionIndicator(rev.key, "D", revisionDate, rev.element))
+      if (!revIndicators.contains(rev.key()))
+        result add Some(RevisionIndicator(rev.key, "D", revisionDate, rev.element))
     }
+    result
   }
 
-  def findChangedEffectivity(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
-    for (rev <- revs.values if !visitedList.contains(rev.key)) {
+  def findChangedEffectivity(prevChanges: RevisionIndicators, revisionDate: String, visitedList: RevisionIndicators): RevisionIndicators = {
+    val result = new RevisionIndicators
+    for (rev <- revIndicators.values if !visitedList.contains(rev.key)) {
       Console.println("comparing effectivities " + rev.key)
 
       if (hasEffectivityChanges(rev.element, prevChanges(rev.key).element))
-        visitedList add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
 
     }
+    result
   }
 
   def hasEffectivityChanges(current: Elem, previous: Elem): Boolean = {
@@ -115,37 +121,39 @@ class AtaElement(elem: Elem) {
     return false
   }
 
-  def findChangedLength(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
-    for (rev <- revs.values if !visitedList.contains(rev.key)) {
+  def findChangedLength(prevChanges: RevisionIndicators, revisionDate: String, visitedList: RevisionIndicators): RevisionIndicators  = {
+    val result = new RevisionIndicators
+    for (rev <- revIndicators.values if !visitedList.contains(rev.key)) {
       Console.println("comparing length " + rev.key)
 
       val currentLength = rev.children.size
       val previousLength = prevChanges(rev.key).children.size
 
       if (currentLength != previousLength)
-        visitedList add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
 
     }
+    result
   }
 
-  def findChangedInChildren(prevChanges: RevisionIndicators, revisionDate: String): Unit = {
-    for (rev <- revs.values if !visitedList.contains(rev.key)) {
+  def findChangedInChildren(prevChanges: RevisionIndicators, revisionDate: String, visitedList: RevisionIndicators): RevisionIndicators =  {
+    val result = new RevisionIndicators
+    for (rev <- revIndicators.values if !visitedList.contains(rev.key)) {
       Console.println("comparing children " + rev.key)
-      if (childHasChanged(rev, prevChanges, revisionDate))
-        visitedList add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
+      if (childHasChanged(rev, prevChanges, revisionDate, visitedList))
+        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev.element))
     }
+    result
   }
 
-  def childHasChanged(parent: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String): Boolean = {
+  def childHasChanged(parent: RevisionIndicator, prevChanges: RevisionIndicators, revisionDate: String, visitedList: RevisionIndicators): Boolean = {
     for (child <- parent.children if (child \ "@chg" != "")) {
       val key = (child \ "@key").text
       if (visitedList.contains(key)) return true
-      if (childHasChanged(revs(key), prevChanges, revisionDate)) {
-        visitedList add Some(RevisionIndicator(key, "R", revisionDate, revs(key).element))
+      if (childHasChanged(revIndicators(key), prevChanges, revisionDate, visitedList)) {
         return true
       }
     }
-
     val previousChildren = prevChanges(parent.key).children.filter(n => n \ "@chg" == "")
 
     var index = 0
