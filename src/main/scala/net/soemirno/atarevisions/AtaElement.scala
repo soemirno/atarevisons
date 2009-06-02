@@ -157,7 +157,7 @@ class AtaElement(elem: Elem) {
                           foundChanges: RevisionIndicators): RevisionIndicators =  {
     val result = new RevisionIndicators
 
-    for (rev <- revIndicators.values i f !foundChanges.contains(rev.key)) {
+    for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
       Console.println("finding children changes" + rev.key)
 
       if (childHasChanged(rev, prevChanges, revisionDate, foundChanges))
