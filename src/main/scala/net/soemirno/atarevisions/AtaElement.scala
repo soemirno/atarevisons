@@ -169,13 +169,79 @@ class AtaElement(elem: Elem) {
                           revisionDate: String,
                           foundChanges: RevisionIndicators): RevisionIndicators =  {
     val result = new RevisionIndicators
-
+    var ignoreList = foundChanges
     for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
       Console.println("finding children changes " + rev.key)
-
-      if (!equalsWithoutText(rev, prevChanges(rev.key)))
-        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+      result ++ findChildChanges (rev, prevChanges, revisionDate, ignoreList)
+      ignoreList ++ result
     }
+    return result
+  }
+
+  def findChildChanges(rev :RevisionIndicator,
+                       prevChanges: RevisionIndicators,
+                       revisionDate: String,
+                       foundChanges: RevisionIndicators):RevisionIndicators = {
+    val result = new RevisionIndicators
+    val thisElem = rev
+    if (!prevChanges.contains(rev.key)){
+      result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+      return result      
+    }
+
+    val thatElem = prevChanges(rev.key)
+
+    val ignoreList = List("chg", "revdate", "targetrefid")
+
+    val sameTag = ((thatElem.prefix == thisElem.prefix)
+              && (thatElem.label == thisElem.label)
+              && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
+              thisElem.attributes.filter(a => !ignoreList.contains(a.key))))
+
+    if (!sameTag) {
+      result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+      return result
+    }
+
+    if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text] &&
+            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text]
+            && thisElem.text.trim != thatElem.text.trim){
+      result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+      return result
+    }   
+    result ++ collectChildrenChanges(rev, thatElem.child, prevChanges, revisionDate, foundChanges)
+    if (!result.isEmpty) result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+    return result
+
+  }
+  def collectChildrenChanges(rev: RevisionIndicator,
+                             previousChilds: NodeSeq,
+                             prevChanges :RevisionIndicators,
+                             revisionDate :String,
+                             foundChanges: RevisionIndicators):RevisionIndicators = {
+    val result = new RevisionIndicators
+
+    val ita = rev.child.filter(e => e.isInstanceOf[Elem]).elements
+    val itb = previousChilds.filter(e => e.isInstanceOf[Elem]).elements
+    var res = true
+
+    while (res && result.size == 0 && ita.hasNext && itb.hasNext) {
+      val currentChild = ita.next
+      val previousChild = itb.next
+      if ((currentChild \"@chg").text !=""){
+        if (foundChanges.contains((currentChild \"@key").text)){
+          res = false
+        } else
+          result ++ findChildChanges(revIndicators((currentChild \"@key").text), prevChanges, revisionDate, foundChanges)
+      } else {
+        res = (equalsWithoutText(currentChild, previousChild))
+      }
+    }
+
+    if (ita.hasNext || itb.hasNext || !res) {
+      result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+    }
+
     return result
   }
 
