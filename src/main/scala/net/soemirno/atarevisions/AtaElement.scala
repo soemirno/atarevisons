@@ -184,6 +184,8 @@ class AtaElement(elem: Elem) {
                        foundChanges: RevisionIndicators):RevisionIndicators = {
     val result = new RevisionIndicators
     val thisElem = rev
+    if (foundChanges.contains(rev.key)) return result
+
     if (!prevChanges.contains(rev.key)){
       result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
       return result      
@@ -225,7 +227,7 @@ class AtaElement(elem: Elem) {
     val itb = previousChilds.filter(e => e.isInstanceOf[Elem]).elements
     var res = true
 
-    while (res && result.size == 0 && ita.hasNext && itb.hasNext) {
+    while (res && result.isEmpty && ita.hasNext && itb.hasNext) {
       val currentChild = ita.next
       val previousChild = itb.next
       if ((currentChild \"@chg").text !=""){
