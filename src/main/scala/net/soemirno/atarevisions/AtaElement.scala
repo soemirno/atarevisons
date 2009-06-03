@@ -80,10 +80,11 @@ class AtaElement(elem: Elem) {
 
 
   def isSame(thisElem: Node, thatElem: Node): Boolean = {
-    if (thisElem.isInstanceOf [RevisionIndicator] &&
-            unchangeCache.contains(thisElem.asInstanceOf [RevisionIndicator].key))
-      return true
+    val isRI = thisElem.isInstanceOf [RevisionIndicator]
 
+    if (isRI && unchangeCache.contains(thisElem.asInstanceOf [RevisionIndicator].key))
+      return true
+                               
     val ignoreList = List("chg", "revdate", "targetrefid")
 
     val sameTag = ((thatElem.prefix == thisElem.prefix)
@@ -96,11 +97,13 @@ class AtaElement(elem: Elem) {
     if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text] &&
             thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text]){
       val result = thisElem.text.trim == thatElem.text.trim
-      if (result) unchangeCache += (thisElem \ "@key").text
+      if (isRI && result)
+        unchangeCache += (thisElem \ "@key").text
       return result
     }
     val result = hasSameChildren(thatElem.child, thisElem.child)
-    if (result) unchangeCache += (thisElem \ "@key").text
+    if (isRI && result)
+      unchangeCache += (thisElem \ "@key").text
     return result 
   }
 
