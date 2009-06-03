@@ -55,7 +55,7 @@ class AtaElement(elem: Elem) {
       Console.println("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
-        result add (RevisionIndicator(rev.key, "D", rev))
+        result add (RevisionIndicator("D", rev))
     }
 
     return result
@@ -67,13 +67,13 @@ class AtaElement(elem: Elem) {
     for (rev <- revIndicators.values) {
       Console.println("finding changes " + rev.key)
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result add (RevisionIndicator(rev.key, "N", rev))
+        result add (RevisionIndicator("N", rev))
       
       else if (rev == (prevChanges(rev.key)))
-        result add (RevisionIndicator(rev.key, "U", rev))
+        result add (RevisionIndicator("U", rev))
 
       else
-        result add (RevisionIndicator(rev.key, "R", rev))
+        result add (RevisionIndicator("R", rev))
     }
     return result
   }

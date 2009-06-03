@@ -4,25 +4,22 @@ package net.soemirno.atarevisions
 import xml._
 
 object RevisionIndicator {
+
   def apply(changeElem: Node) = {
     val changeType = (changeElem \ "@chg").text
     val key = (changeElem \ "@key").text
     new RevisionIndicator(key, changeType, changeElem.asInstanceOf[Elem])
   }
 
-  def apply(key: String, changeType: String, node: Node) = new RevisionIndicator(key, changeType, node.asInstanceOf[Elem])
+  def apply(changeType: String, ri: RevisionIndicator) = new RevisionIndicator(ri.key, changeType, ri)
 }
 
 class RevisionIndicator(key: String, changeType: String, elem: Elem) extends
       Elem(elem.prefix, elem.label, elem.attributes, elem.scope, elem.child: _*) {
 
-  private val childElem = child.filter(n => n.isInstanceOf[Elem])
-
   def key(): String = key
 
   def changeType(): String = changeType
-
-  def children(): NodeSeq = childElem
 
   override def toString(): String = key + "," + changeType + ":\n" + super.toString
 
