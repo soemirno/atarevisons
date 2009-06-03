@@ -26,7 +26,7 @@ object AtaElement {
 }
 
 class AtaElement(elem: Elem) {
-  private val unchangeCache  = new HashSet[String]()
+  
   private val revIndicators = {
     val elementsContainingRevInd = (elem \\ "_").filter(e => e \ "@chg" != "")
     val list = new RevisionIndicators
@@ -56,7 +56,7 @@ class AtaElement(elem: Elem) {
       Console.println("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
-        result add Some(RevisionIndicator(rev.key, "D", revisionDate, rev))
+        result add (RevisionIndicator(rev.key, "D", revisionDate, rev))
     }
 
     return result
@@ -69,52 +69,15 @@ class AtaElement(elem: Elem) {
     for (rev <- revIndicators.values) {
       Console.println("finding changes " + rev.key)
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result add Some(RevisionIndicator(rev.key, "N", revisionDate, rev))
-      else if (isSame(rev, prevChanges(rev.key)))
-        result add Some(RevisionIndicator(rev.key, "U", revisionDate, rev))
+        result add (RevisionIndicator(rev.key, "N", revisionDate, rev))
+      
+      else if (rev == (prevChanges(rev.key)))
+        result add (RevisionIndicator(rev.key, "U", prevChanges(rev.key).revdate, rev))
+
       else
-        result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
+        result add (RevisionIndicator(rev.key, "R", revisionDate, rev))
     }
     return result
-  }
-
-
-  def isSame(thisElem: Node, thatElem: Node): Boolean = {
-    val isRI = thisElem.isInstanceOf [RevisionIndicator]
-
-    if (isRI && unchangeCache.contains(thisElem.asInstanceOf [RevisionIndicator].key))
-      return true
-                               
-    val ignoreList = List("chg", "revdate", "targetrefid")
-
-    val sameTag = ((thatElem.prefix == thisElem.prefix)
-              && (thatElem.label == thisElem.label)
-              && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
-              thisElem.attributes.filter(a => !ignoreList.contains(a.key))))
-
-    if (!sameTag) return false
-
-    if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text] &&
-            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text]){
-      val result = thisElem.text.trim == thatElem.text.trim
-      if (isRI && result)
-        unchangeCache += (thisElem \ "@key").text
-      return result
-    }
-    val result = hasSameChildren(thatElem.child, thisElem.child)
-    if (isRI && result)
-      unchangeCache += (thisElem \ "@key").text
-    return result 
-  }
-
-  def hasSameChildren(a :NodeSeq, b :NodeSeq):Boolean = {
-    val ita = a.filter(e => e.isInstanceOf[Elem]).elements
-    val itb = b.filter(e => e.isInstanceOf[Elem]).elements
-    var res = true
-    while (res && ita.hasNext && itb.hasNext) {
-      res = (isSame(ita.next, itb.next))
-    }
-    !ita.hasNext && !itb.hasNext && res
   }
 
 }
