@@ -212,6 +212,10 @@ class AtaElement(elem: Elem) {
     val ignoreList = List("chg", "revdate", "targetrefid")
     var isEqual = false
 
+    if (thisElem.isInstanceOf[RevisionIndicator] && cache.contains(thisElem.asInstanceOf[RevisionIndicator].key)) {
+      return thisElem.asInstanceOf[RevisionIndicator].changeType == "U"      
+    }
+
     val sameTag = ((thatElem.prefix == thisElem.prefix)
             && (thatElem.label == thisElem.label)
             && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
