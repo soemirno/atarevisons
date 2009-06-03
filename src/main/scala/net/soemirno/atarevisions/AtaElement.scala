@@ -40,34 +40,18 @@ class AtaElement(elem: Elem) {
     val result = new RevisionIndicators
     val previousIndicators = previous.revisionIndicators
 
-    result ++ findNew ( previousIndicators, revisionDate, result)
-    result ++ findChildrenChanges ( previousIndicators, revisionDate, result)
-    result ++ findDeleted ( previousIndicators, revisionDate, result)
+    result ++ findChanges ( previousIndicators, revisionDate)
+    result ++ findDeleted ( previousIndicators, revisionDate)
 
     return result
   }
 
-  def findNew(prevChanges: RevisionIndicators,
-              revisionDate: String,
-              foundChanges: RevisionIndicators): RevisionIndicators = {
-    val result = new RevisionIndicators
-
-    for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
-      Console.println("finding new " + rev.key)
-
-      if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result add Some(RevisionIndicator(rev.key, "N", revisionDate, rev))
-    }
-
-    return result
-  }
 
   def findDeleted(prevChanges: RevisionIndicators,
-                  revisionDate: String,
-                  foundChanges: RevisionIndicators): RevisionIndicators = {
+                  revisionDate: String): RevisionIndicators = {
     val result = new RevisionIndicators
 
-    for (rev <- prevChanges.values if !foundChanges.contains(rev.key)) {
+    for (rev <- prevChanges.values) {
       Console.println("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
@@ -77,15 +61,15 @@ class AtaElement(elem: Elem) {
     return result
   }
 
-  def findChildrenChanges(prevChanges: RevisionIndicators,
-                          revisionDate: String,
-                          foundChanges: RevisionIndicators): RevisionIndicators =  {
+  def findChanges(prevChanges: RevisionIndicators,
+                          revisionDate: String): RevisionIndicators =  {
     val result = new RevisionIndicators
 
-    for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
-      Console.println("finding children changes " + rev.key)
-
-      if (isSame(rev, prevChanges(rev.key)))
+    for (rev <- revIndicators.values) {
+      Console.println("finding changes " + rev.key)
+      if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
+        result add Some(RevisionIndicator(rev.key, "N", revisionDate, rev))
+      else if (isSame(rev, prevChanges(rev.key)))
         result add Some(RevisionIndicator(rev.key, "U", revisionDate, rev))
       else
         result add Some(RevisionIndicator(rev.key, "R", revisionDate, rev))
@@ -104,7 +88,8 @@ class AtaElement(elem: Elem) {
 
     if (!sameTag) return false
 
-    if (thisElem.child.length == 1 && thatElem.child.length == 1 ) return thisElem == thatElem
+    if (thisElem.child.length == 1 && thisElem.isInstanceOf[Text] && thatElem.child.length == 1 )
+      return thisElem == thatElem
 
     return hasSameChildren(thatElem.child, thisElem.child)
   }
