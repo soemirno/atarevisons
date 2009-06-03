@@ -88,8 +88,9 @@ class AtaElement(elem: Elem) {
 
     if (!sameTag) return false
 
-    if (thisElem.child.length == 1 && thisElem.isInstanceOf[Text] && thatElem.child.length == 1 )
-      return thisElem == thatElem
+    if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text] &&
+            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text])
+      return thisElem.text.trim == thatElem.text.trim
 
     return hasSameChildren(thatElem.child, thisElem.child)
   }
