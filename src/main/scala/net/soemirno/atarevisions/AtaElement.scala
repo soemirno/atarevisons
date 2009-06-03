@@ -1,5 +1,6 @@
 package net.soemirno.atarevisions
 
+import collection.mutable.HashSet
 import java.io.File
 import xml.{Text, Node, NodeSeq, Elem}
 object AtaElement {
@@ -25,7 +26,7 @@ object AtaElement {
 }
 
 class AtaElement(elem: Elem) {
-
+  private val unchangeCache  = new HashSet[String]()
   private val revIndicators = {
     val elementsContainingRevInd = (elem \\ "_").filter(e => e \ "@chg" != "")
     val list = new RevisionIndicators
@@ -79,6 +80,9 @@ class AtaElement(elem: Elem) {
 
 
   def isSame(thisElem: Node, thatElem: Node): Boolean = {
+    if (thisElem.isInstanceOf [RevisionIndicator] && unchangeCache.contains(thisElem.asInstanceOf [RevisionIndicator].key))
+      return true
+
     val ignoreList = List("chg", "revdate", "targetrefid")
 
     val sameTag = ((thatElem.prefix == thisElem.prefix)
@@ -89,10 +93,14 @@ class AtaElement(elem: Elem) {
     if (!sameTag) return false
 
     if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text] &&
-            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text])
-      return thisElem.text.trim == thatElem.text.trim
-
-    return hasSameChildren(thatElem.child, thisElem.child)
+            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text]){
+      val result = thisElem.text.trim == thatElem.text.trim
+      if (result && thisElem.isInstanceOf[RevisionIndicator]) unchangeCache += (thisElem \ "@key").text
+      return result
+    }
+    val result = hasSameChildren(thatElem.child, thisElem.child)
+    if (result && thisElem.isInstanceOf[RevisionIndicator]) unchangeCache += (thisElem \ "@key").text
+    return result 
   }
 
   def hasSameChildren(a :NodeSeq, b :NodeSeq):Boolean = {
