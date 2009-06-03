@@ -2,6 +2,7 @@ package net.soemirno.atarevisions
 
 import java.io.File
 import xml.{Text, Node, NodeSeq, Elem}
+
 object AtaElement {
   def apply(elem: Elem) = {
     new AtaElement(elem)
@@ -30,7 +31,7 @@ class AtaElement(elem: Elem) {
     val elementsContainingRevInd = (elem \\ "_").filter(e => e \ "@chg" != "")
     val list = new RevisionIndicators
 
-    for (element <- elementsContainingRevInd) list.add (RevisionIndicator(element))
+    for (element <- elementsContainingRevInd) list.add(RevisionIndicator(element))
     list
   }
 
@@ -40,9 +41,9 @@ class AtaElement(elem: Elem) {
     val result = new RevisionIndicators
     val previousIndicators = previous.revisionIndicators
 
-    result ++ findNew ( previousIndicators, revisionDate, result)
-    result ++ findChildrenChangesBruteForce ( previousIndicators, revisionDate, result)
-    result ++ findDeleted ( previousIndicators, revisionDate, result)
+    result ++ findNew(previousIndicators, revisionDate, result)
+    result ++ findChildrenChangesBruteForce(previousIndicators, revisionDate, result)
+    result ++ findDeleted(previousIndicators, revisionDate, result)
 
     return result
   }
@@ -112,7 +113,7 @@ class AtaElement(elem: Elem) {
     for (sb <- currentSB) {
       val prevSbItem = previousSB.filter(
         n => n \ "@sbnbr" == sb \ "@sbnbr" &&
-             n \ "@sbcond" == sb \ "@sbcond"
+                n \ "@sbcond" == sb \ "@sbcond"
         )
       if (prevSbItem.size == 0) return true
       if (prevSbItem != sb) return true
@@ -134,7 +135,7 @@ class AtaElement(elem: Elem) {
 
   def findLengthChanges(prevChanges: RevisionIndicators,
                         revisionDate: String,
-                        foundChanges: RevisionIndicators): RevisionIndicators  = {
+                        foundChanges: RevisionIndicators): RevisionIndicators = {
     val result = new RevisionIndicators
 
     for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
@@ -153,7 +154,7 @@ class AtaElement(elem: Elem) {
 
   def findChildrenChanges(prevChanges: RevisionIndicators,
                           revisionDate: String,
-                          foundChanges: RevisionIndicators): RevisionIndicators =  {
+                          foundChanges: RevisionIndicators): RevisionIndicators = {
     val result = new RevisionIndicators
 
     for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
@@ -166,13 +167,13 @@ class AtaElement(elem: Elem) {
   }
 
   def findChildrenChangesBruteForce(prevChanges: RevisionIndicators,
-                          revisionDate: String,
-                          foundChanges: RevisionIndicators): RevisionIndicators =  {
+                                    revisionDate: String,
+                                    foundChanges: RevisionIndicators): RevisionIndicators = {
 
     for (rev <- revIndicators.values if !foundChanges.contains(rev.key)) {
-       Console.println("finding children changes " + rev.key)
-      if(!cache.contains(rev.key))
-        equalsWithoutText(rev, prevChanges(rev.key), revisionDate)        
+      Console.println("finding children changes " + rev.key)
+      if (!cache.contains(rev.key))
+        equalsWithoutText(rev, prevChanges(rev.key), revisionDate)
     }
 
     return cache
@@ -188,7 +189,7 @@ class AtaElement(elem: Elem) {
       if (foundChanges.contains(key)) return true
 
       if (childHasChanged(revIndicators(key), prevChanges, revisionDate, foundChanges)) return true
-      
+
     }
 
     val previousChildren = prevChanges(parent.key).children.filter(n => n \ "@chg" == "")
@@ -207,42 +208,48 @@ class AtaElement(elem: Elem) {
     return false
   }
 
-  def equalsWithoutText(thisElem: Node, thatElem: Node, revisionDate :String): Boolean = {
+  def equalsWithoutText(thisElem: Node, thatElem: Node, revisionDate: String): Boolean = {
     val ignoreList = List("chg", "revdate", "targetrefid")
     var isEqual = false
 
     val sameTag = ((thatElem.prefix == thisElem.prefix)
-              && (thatElem.label == thisElem.label)
-              && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
-              thisElem.attributes.filter(a => !ignoreList.contains(a.key))))
+            && (thatElem.label == thisElem.label)
+            && (thatElem.attributes.filter(a => !ignoreList.contains(a.key)) ==
+            thisElem.attributes.filter(a => !ignoreList.contains(a.key))))
 
     if (!sameTag) {
-      if(thisElem.isInstanceOf[RevisionIndicator]){
+      if (thisElem.isInstanceOf[RevisionIndicator]) {
         val ri = thisElem.asInstanceOf[RevisionIndicator]
-        cache add  Some(RevisionIndicator(ri.key, "R", revisionDate, ri))
+        cache add Some(RevisionIndicator(ri.key, "R", revisionDate, ri))
       }
       return false
     }
 
     if (thisElem.child.length == 1 && thisElem.child(0).isInstanceOf[Text] &&
-            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text]){
+            thatElem.child.length == 1 && thatElem.child(0).isInstanceOf[Text]) {
       isEqual = thisElem.text.trim == thatElem.text.trim
-      if (!isEqual && thisElem.isInstanceOf[RevisionIndicator]) {
+      if (thisElem.isInstanceOf[RevisionIndicator]) {
         val ri = thisElem.asInstanceOf[RevisionIndicator]
-        cache add  Some(RevisionIndicator(ri.key, "R", revisionDate, ri))
+        if (isEqual)
+          cache add Some(RevisionIndicator(ri.key, "U", revisionDate, ri))
+        else
+          cache add Some(RevisionIndicator(ri.key, "R", revisionDate, ri))
       }
       return isEqual
     }
 
     isEqual = hasSameChildren(thatElem.child, thisElem.child, revisionDate)
-    if (!isEqual && thisElem.isInstanceOf[RevisionIndicator]) {
+    if (thisElem.isInstanceOf[RevisionIndicator]) {
       val ri = thisElem.asInstanceOf[RevisionIndicator]
-      cache add  Some(RevisionIndicator(ri.key, "R", revisionDate, ri))
+      if (isEqual)
+        cache add Some(RevisionIndicator(ri.key, "U", revisionDate, ri))
+      else
+        cache add Some(RevisionIndicator(ri.key, "R", revisionDate, ri))
     }
     return isEqual
   }
 
-  def hasSameChildren(a :NodeSeq, b :NodeSeq, revisionDate: String):Boolean = {
+  def hasSameChildren(a: NodeSeq, b: NodeSeq, revisionDate: String): Boolean = {
     val ita = a.filter(e => e.isInstanceOf[Elem]).elements
     val itb = b.filter(e => e.isInstanceOf[Elem]).elements
     var res = true
