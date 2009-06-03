@@ -41,41 +41,39 @@ class AtaElement(elem: Elem) {
     val result = new RevisionIndicators
     val previousIndicators = previous.revisionIndicators
 
-    result ++ findChanges ( previousIndicators, revisionDate)
-    result ++ findDeleted ( previousIndicators, revisionDate)
+    result ++ findChanges ( previousIndicators)
+    result ++ findDeleted ( previousIndicators)
 
     return result
   }
 
 
-  def findDeleted(prevChanges: RevisionIndicators,
-                  revisionDate: String): RevisionIndicators = {
+  def findDeleted(prevChanges: RevisionIndicators): RevisionIndicators = {
     val result = new RevisionIndicators
 
     for (rev <- prevChanges.values) {
       Console.println("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
-        result add (RevisionIndicator(rev.key, "D", revisionDate, rev))
+        result add (RevisionIndicator(rev.key, "D", rev))
     }
 
     return result
   }
 
-  def findChanges(prevChanges: RevisionIndicators,
-                          revisionDate: String): RevisionIndicators =  {
+  def findChanges(prevChanges: RevisionIndicators): RevisionIndicators =  {
     val result = new RevisionIndicators
 
     for (rev <- revIndicators.values) {
       Console.println("finding changes " + rev.key)
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result add (RevisionIndicator(rev.key, "N", revisionDate, rev))
+        result add (RevisionIndicator(rev.key, "N", rev))
       
       else if (rev == (prevChanges(rev.key)))
-        result add (RevisionIndicator(rev.key, "U", prevChanges(rev.key).revdate, rev))
+        result add (RevisionIndicator(rev.key, "U", rev))
 
       else
-        result add (RevisionIndicator(rev.key, "R", revisionDate, rev))
+        result add (RevisionIndicator(rev.key, "R", rev))
     }
     return result
   }

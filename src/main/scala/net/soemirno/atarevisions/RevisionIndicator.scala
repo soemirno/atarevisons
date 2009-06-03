@@ -6,15 +6,14 @@ import xml._
 object RevisionIndicator {
   def apply(changeElem: Node) = {
     val changeType = (changeElem \ "@chg").text
-    val revisionDate = (changeElem \ "@revdate").text
     val key = (changeElem \ "@key").text
-    new RevisionIndicator(key, changeType, revisionDate, changeElem.asInstanceOf[Elem])
+    new RevisionIndicator(key, changeType, changeElem.asInstanceOf[Elem])
   }
 
-  def apply(key: String, changeType: String, date: String, node: Node) = new RevisionIndicator(key, changeType, date, node.asInstanceOf[Elem])
+  def apply(key: String, changeType: String, node: Node) = new RevisionIndicator(key, changeType, node.asInstanceOf[Elem])
 }
 
-class RevisionIndicator(key: String, changeType: String, date: String, elem: Elem) extends
+class RevisionIndicator(key: String, changeType: String, elem: Elem) extends
       Elem(elem.prefix, elem.label, elem.attributes, elem.scope, elem.child: _*) {
 
   private val childElem = child.filter(n => n.isInstanceOf[Elem])
@@ -23,11 +22,9 @@ class RevisionIndicator(key: String, changeType: String, date: String, elem: Ele
 
   def changeType(): String = changeType
 
-  def revdate(): String = date
-
   def children(): NodeSeq = childElem
 
-  override def toString(): String = key + "," + changeType + "," + date + ":\n" + super.toString
+  override def toString(): String = key + "," + changeType + ":\n" + super.toString
 
   override def equals(x: Any): Boolean = x match {
     case g:Group => false
