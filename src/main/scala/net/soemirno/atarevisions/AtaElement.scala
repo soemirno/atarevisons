@@ -28,8 +28,8 @@ object Starter {
     def docLoader = actor {
       receive {
         case file: File => {
-          current = AtaElement(file)
           logger.info("loading current")
+          current = AtaElement(file)
           comparer ! "LOADED"
         }
       }
@@ -38,8 +38,8 @@ object Starter {
     def prevLoader = actor {
       receive {
         case file: File => {
-          previous = AtaElement(file)
           logger.info("loading previous")
+          previous = AtaElement(file)          
           comparer ! "LOADED"
         }
       }
