@@ -10,7 +10,7 @@ object Starter {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   def main(args: Array[String]) {
-    compare(new File(args(0), new File(args(1), new File(args(2)))
+    compare(AtaElement(new File(args(0))), AtaElement(new File(args(1))), new File(args(2)))
   }
 
   def compare(curr: AtaElement, prev: AtaElement, resultSource: File) = {
