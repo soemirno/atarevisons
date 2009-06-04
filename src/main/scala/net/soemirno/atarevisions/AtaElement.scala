@@ -2,7 +2,74 @@ package net.soemirno.atarevisions
 
 import collection.mutable.HashSet
 import java.io.File
+import org.slf4j.LoggerFactory
 import xml.Elem
+import scala.actors.Actor._
+
+object Starter {
+  val logger = LoggerFactory.getLogger(this.getClass)
+  def main(args: Array[String]) {
+    var current: AtaElement = null
+    var previous: AtaElement = null
+
+    def comparer = actor {
+      while (true) {
+        var complete = false
+        receive {
+          case "LOADED" => {
+            complete = (current != null && previous != null)
+            if (complete) compare(current, previous, new File(args(2)))
+          }
+        }
+      }
+
+    }
+
+    def docLoader = actor {
+      receive {
+        case file: File => {
+          current = AtaElement(file)
+          logger.info("loading current")
+          comparer ! "LOADED"
+        }
+      }
+    }
+
+    def prevLoader = actor {
+      receive {
+        case file: File => {
+          previous = AtaElement(file)
+          logger.info("loading previous")
+          comparer ! "LOADED"
+        }
+      }
+    }
+    docLoader ! new File(args(0))
+    prevLoader ! new File(args(1))
+  }
+
+  def compare(curr: AtaElement, prev: AtaElement, resultSource: File) = {
+    val changes = curr.diff(prev)
+    val checks = AtaElement(resultSource).revisionIndicators
+
+    for (check <- checks.values) {
+      if (check.changeType != "U" && !changes.contains(check.key))
+        logger.info("not found: " + check.key + "," + check.changeType)
+    }
+
+    logger.info("--- Changes ---")
+    for (change: RevisionIndicator <- changes.values) {
+      logger.info("detected: " + change.key + "," + change.changeType)
+
+      if (!checks.contains(change.key))
+        logger.info("missing: " + change.key + "," + change.changeType)
+
+      else if (change.changeType != checks(change.key).changeType)
+        logger.info("expected: " + change.key + "," + checks(change.key).changeType)
+    }
+  }  
+}
+
 object AtaElement {
   def apply(elem: Elem) = {
     new AtaElement(elem)

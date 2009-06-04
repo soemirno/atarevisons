@@ -3,12 +3,13 @@ package net.soemirno.atarevisions
 import collection.mutable.HashMap
 import java.io.File
 import org.scalatest.junit.JUnit3Suite
+import org.slf4j.LoggerFactory
 import xml.{Text, NodeSeq, Group, Node, Elem}
 import scala.actors.Actor._
 
 
-
 class AtaRevisionsTest extends JUnit3Suite with Fixtures {
+  val logger = LoggerFactory.getLogger(this.getClass)
   val PREVIOUS_SOURCE = new File(FIXTURES_FOLDER, "previous.xml")
   val CURRENT_SOURCE = new File(FIXTURES_FOLDER, "current.xml")
   val RESULT_SOURCE = new File(FIXTURES_FOLDER, "result.xml")
@@ -24,34 +25,37 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   }
 
   def testHasRevisedElements() = {
-    var current :AtaElement = null
-    var previous :AtaElement = null
+    var current: AtaElement = null
+    var previous: AtaElement = null
 
     def comparer = actor {
-      var complete = false
-      receive {
-        case "LOADED" => {
-          complete = (current != null && previous!= null)
-          if (complete) compare( current, previous)
+      while (true) {
+        var complete = false
+        receive {
+          case "LOADED" => {
+            complete = (current != null && previous != null)
+            if (complete) compare(current, previous)
+          }
         }
       }
+
     }
 
     def docLoader = actor {
       receive {
         case file: File => {
           current = AtaElement(file)
-          println("loading current")
+          logger.info("loading current")
           comparer ! "LOADED"
         }
       }
     }
 
-  def prevLoader = actor {
+    def prevLoader = actor {
       receive {
         case file: File => {
           previous = AtaElement(file)
-          println("loading previous")
+          logger.info("loading previous")
           comparer ! "LOADED"
         }
       }
@@ -61,24 +65,24 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
 
   }
 
-  def compare (curr :AtaElement, prev :AtaElement ) = {
+  def compare(curr: AtaElement, prev: AtaElement) = {
     val changes = curr.diff(prev)
     val checks = AtaElement(RESULT_SOURCE).revisionIndicators
 
     for (check <- checks.values) {
       if (check.changeType != "U" && !changes.contains(check.key))
-        Console.println("not found: " + check.key + "," + check.changeType)
+        logger.info("not found: " + check.key + "," + check.changeType)
     }
 
-    Console.println("--- Changes ---")
+    logger.info("--- Changes ---")
     for (change: RevisionIndicator <- changes.values) {
-      Console.println("detected: " + change.key + "," + change.changeType)
+      logger.info("detected: " + change.key + "," + change.changeType)
 
       if (!checks.contains(change.key))
-        Console.println("missing: " + change.key + "," + change.changeType)
+        logger.info("missing: " + change.key + "," + change.changeType)
 
       else if (change.changeType != checks(change.key).changeType)
-        Console.println("expected: " + change.key + "," + checks(change.key).changeType)
+        logger.info("expected: " + change.key + "," + checks(change.key).changeType)
     }
   }
 
