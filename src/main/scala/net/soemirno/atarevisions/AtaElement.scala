@@ -8,44 +8,9 @@ import scala.actors.Actor._
 
 object Starter {
   val logger = LoggerFactory.getLogger(this.getClass)
+
   def main(args: Array[String]) {
-    var current: AtaElement = null
-    var previous: AtaElement = null
-
-    def comparer = actor {
-      while (true) {
-        var complete = false
-        receive {
-          case "LOADED" => {
-            complete = (current != null && previous != null)
-            if (complete) compare(current, previous, new File(args(2)))
-          }
-        }
-      }
-
-    }
-
-    def docLoader = actor {
-      receive {
-        case file: File => {
-          logger.info("loading current")
-          current = AtaElement(file)
-          comparer ! "LOADED"
-        }
-      }
-    }
-
-    def prevLoader = actor {
-      receive {
-        case file: File => {
-          logger.info("loading previous")
-          previous = AtaElement(file)          
-          comparer ! "LOADED"
-        }
-      }
-    }
-    docLoader ! new File(args(0))
-    prevLoader ! new File(args(1))
+    compare(new File(args(0), new File(args(1), new File(args(2)))
   }
 
   def compare(curr: AtaElement, prev: AtaElement, resultSource: File) = {
@@ -93,7 +58,7 @@ object AtaElement {
 }
 
 class AtaElement(elem: Elem) {
-  
+  val logger = LoggerFactory.getLogger(this.getClass)
   private val revIndicators = {
     val elementsContainingRevInd = (elem \\ "_").filter(e => e \ "@chg" != "")
     val list = new RevisionIndicators
@@ -121,7 +86,7 @@ class AtaElement(elem: Elem) {
     val result = new RevisionIndicators
 
     for (rev <- prevChanges.values) {
-      Console.println("finding deleted " + rev.key)
+      logger.info("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
         result add (RevisionIndicator("D", rev))
@@ -134,7 +99,7 @@ class AtaElement(elem: Elem) {
     val result = new RevisionIndicators
 
     for (rev <- revIndicators.values) {
-      Console.println("finding changes " + rev.key)
+      logger.info("finding changes " + rev.key)
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
         result add (RevisionIndicator("N", rev))
       
