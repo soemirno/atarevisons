@@ -2,7 +2,7 @@ package net.soemirno.atarevisions
 
 import collection.mutable.HashSet
 import java.io.File
-import xml.{Text, Node, NodeSeq, Elem}
+import xml.Elem
 object AtaElement {
   def apply(elem: Elem) = {
     new AtaElement(elem)
@@ -31,13 +31,15 @@ class AtaElement(elem: Elem) {
     val elementsContainingRevInd = (elem \\ "_").filter(e => e \ "@chg" != "")
     val list = new RevisionIndicators
 
-    for (element <- elementsContainingRevInd) list.add (RevisionIndicator(element))
+    for (element <- elementsContainingRevInd)
+      list.add (RevisionIndicator(element))
+
     list
   }
 
   def revisionIndicators(): RevisionIndicators = revIndicators
 
-  def diff(previous: AtaElement, revisionDate: String): RevisionIndicators = {
+  def diff(previous: AtaElement): RevisionIndicators = {
     val result = new RevisionIndicators
     val previousIndicators = previous.revisionIndicators
 
@@ -69,7 +71,7 @@ class AtaElement(elem: Elem) {
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
         result add (RevisionIndicator("N", rev))
       
-      else if (rev == (prevChanges(rev.key)))
+      else if (rev isSameAs (prevChanges(rev.key)))
         result add (RevisionIndicator("U", rev))
 
       else
