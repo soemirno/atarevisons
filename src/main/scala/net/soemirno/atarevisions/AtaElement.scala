@@ -11,11 +11,13 @@ object Starter {
 
   def main(args: Array[String]) {
     logger.info("start comparing")
-    compare(AtaElement(new File(args(0))), AtaElement(new File(args(1))), new File(args(2)))
+    compare(new File(args(0), new File(args(1), new File(args(2)))
   }
 
-  def compare(curr: AtaElement, prev: AtaElement, resultSource: File) = {
-    val changes = curr.diff(prev)
+  def compare(curr: File, prev: File, resultSource: File) = {
+
+    val changes = AtaElement(curr).diff(AtaElement(prev))
+
     val checks = AtaElement(resultSource).revisionIndicators
 
     for (check <- checks.values) {
@@ -85,9 +87,9 @@ class AtaElement(elem: Elem) {
 
   def findDeleted(prevChanges: RevisionIndicators): RevisionIndicators = {
     val result = new RevisionIndicators
+    logger.info("finding deleted keys")
 
     for (rev <- prevChanges.values) {
-      logger.info("finding deleted " + rev.key)
 
       if (!revIndicators.contains(rev.key()))
         result add (RevisionIndicator("D", rev))
@@ -98,9 +100,10 @@ class AtaElement(elem: Elem) {
 
   def findChanges(prevChanges: RevisionIndicators): RevisionIndicators =  {
     val result = new RevisionIndicators
+    logger.info("finding changed keys")
 
     for (rev <- revIndicators.values) {
-      logger.info("finding changes " + rev.key)
+
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
         result add (RevisionIndicator("N", rev))
       
