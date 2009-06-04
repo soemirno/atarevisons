@@ -4,6 +4,9 @@ import collection.mutable.HashMap
 import java.io.File
 import org.scalatest.junit.JUnit3Suite
 import xml.{Text, NodeSeq, Group, Node, Elem}
+import scala.actors.Actor._
+
+
 
 class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   val PREVIOUS_SOURCE = new File(FIXTURES_FOLDER, "previous.xml")
@@ -21,8 +24,45 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   }
 
   def testHasRevisedElements() = {
+    var current :AtaElement = null
+    var previous :AtaElement = null
 
-    val changes = AtaElement(CURRENT_SOURCE).diff(AtaElement(PREVIOUS_SOURCE), "20090201")
+    def comparer = actor {
+      var complete = false
+      receive {
+        case "LOADED" => {
+          complete = (current != null && previous!= null)
+          if (complete) compare( current, previous)
+        }
+      }
+    }
+
+    def docLoader = actor {
+      receive {
+        case file: File => {
+          current = AtaElement(file)
+          println("loading current")
+          comparer ! "LOADED"
+        }
+      }
+    }
+
+  def prevLoader = actor {
+      receive {
+        case file: File => {
+          previous = AtaElement(file)
+          println("loading previous")
+          comparer ! "LOADED"
+        }
+      }
+    }
+    docLoader ! CURRENT_SOURCE
+    prevLoader ! PREVIOUS_SOURCE
+
+  }
+
+  def compare (curr :AtaElement, prev :AtaElement ) = {
+    val changes = curr.diff(prev)
     val checks = AtaElement(RESULT_SOURCE).revisionIndicators
 
     for (check <- checks.values) {
