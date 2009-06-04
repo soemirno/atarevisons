@@ -39,9 +39,6 @@ object Starter {
 }
 
 object AtaElement {
-  def apply(elem: Elem) = {
-    new AtaElement(elem)
-  }
 
   def apply(sourceFile: File) = {
     val document: Elem = {
@@ -50,7 +47,18 @@ object AtaElement {
       else
         throw new IllegalArgumentException("use valid xml file")
     }
-    new AtaElement(document)
+
+    val revIndicators = {
+      val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@key" != "")
+      val list = new RevisionIndicators
+
+      for (element <- elementsContainingRevInd)
+        list.add (RevisionIndicator(element))
+
+      list
+    }
+
+    new AtaElement(revIndicators)
   }
 
   def isValid(sourceFile: File): Boolean = {
@@ -60,17 +68,8 @@ object AtaElement {
 
 }
 
-class AtaElement(elem: Elem) {
+class AtaElement(revIndicators: RevisionIndicators) {
   val logger = LoggerFactory.getLogger(this.getClass)
-  private val revIndicators = {
-    val elementsContainingRevInd = (elem \\ "_").filter(e => e \ "@chg" != "")
-    val list = new RevisionIndicators
-
-    for (element <- elementsContainingRevInd)
-      list.add (RevisionIndicator(element))
-
-    list
-  }
 
   def revisionIndicators(): RevisionIndicators = revIndicators
 

@@ -25,48 +25,8 @@ class AtaRevisionsTest extends JUnit3Suite with Fixtures {
   }
 
   def testHasRevisedElements() = {
-    var current: AtaElement = null
-    var previous: AtaElement = null
 
-    def comparer = actor {
-      while (true) {
-        var complete = false
-        receive {
-          case "LOADED" => {
-            complete = (current != null && previous != null)
-            if (complete) compare(current, previous)
-          }
-        }
-      }
-
-    }
-
-    def docLoader = actor {
-      receive {
-        case file: File => {
-          current = AtaElement(file)
-          logger.info("loading current")
-          comparer ! "LOADED"
-        }
-      }
-    }
-
-    def prevLoader = actor {
-      receive {
-        case file: File => {
-          previous = AtaElement(file)
-          logger.info("loading previous")
-          comparer ! "LOADED"
-        }
-      }
-    }
-    docLoader ! CURRENT_SOURCE
-    prevLoader ! PREVIOUS_SOURCE
-
-  }
-
-  def compare(curr: AtaElement, prev: AtaElement) = {
-    val changes = curr.diff(prev)
+    val changes = AtaElement(CURRENT_SOURCE).diff(AtaElement(PREVIOUS_SOURCE))
     val checks = AtaElement(RESULT_SOURCE).revisionIndicators
 
     for (check <- checks.values) {
