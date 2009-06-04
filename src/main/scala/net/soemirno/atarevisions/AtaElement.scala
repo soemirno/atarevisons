@@ -11,7 +11,7 @@ object Starter {
 
   def main(args: Array[String]) {
     logger.info("start comparing")
-    compare(new File(args(0), new File(args(1), new File(args(2)))
+    compare(new File(args(0)), new File(args(1)), new File(args(2)))
   }
 
   def compare(curr: File, prev: File, resultSource: File) = {
