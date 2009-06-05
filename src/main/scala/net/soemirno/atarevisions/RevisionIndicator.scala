@@ -23,7 +23,7 @@ class RevisionIndicator(key: String, changeType: String, elem: Elem) extends
 
   override def toString(): String = key + "," + changeType + ":\n" + super.toString
 
-  def isSameAs(other: RevisionIndicator): Boolean = isSame(this, other)  
+  def isSameAs(other: RevisionIndicator): Boolean = isSame(this, other)
 
   private def isSame(thisElem: Node, thatElem: Node): Boolean = {
     val ignoreList = List("chg", "revdate", "targetrefid")

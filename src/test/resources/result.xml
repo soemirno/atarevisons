@@ -14,14 +14,14 @@
 						<effect effrg="100123 204288 495521 522999" />
 					</sheet>
 				</graphic>
-				<graphic key="W0000010" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="002">
-					<sheet key="W0000011" chg="x" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="002" sheetnbr="01" gnbr="A0255317" />
+				<graphic key="W0000010" chg="U" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="002">
+					<sheet key="W0000011" chg="U" revdate="TODOTODO" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="002" sheetnbr="01" gnbr="A0255317" />
 				</graphic>
 				<graphic key="W8888880" chg="N" revdate="20090201" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="003">
 					<sheet key="W8888881" chg="N" revdate="W8888881" chapnbr="21" sectnbr="00" subjnbr="00" gtype="WD" pagenbr="003" sheetnbr="01" gnbr="A0255317" />
 				</graphic>
                 <graphic chapnbr="34" chg="R" gtype="WD" key="W0317650" pagenbr="011" revdate="20090201" sectnbr="28" subjnbr="50"><effect effrg="378378 387388 394394 400401 409410 420424 429433 438439 441442 451451 453455 461461 463463 470470 473474 476476 487487 492496 500500 504505 509509 511513 516519 522523 527527" />
-                <title>INERTIAL REFERENCE SYSTEM SYSTEM 3 DATA INPUT</title><sheet chapnbr="34" chg="x" gnbr="d41553_165_aq" gtype="WD" key="W0317651" pagenbr="011" revdate="TODOTODO" sectnbr="28" sheetnbr="01" subjnbr="50"><effect effrg="378378 387388 394394 400401 409410 420424 429433 438439 441442 451451 453455 461461 463463 470470 473474 476476 487487 492496 500500 504505 509509 511513 516519 522523 527527" />
+                <title>INERTIAL REFERENCE SYSTEM SYSTEM 3 DATA INPUT</title><sheet chapnbr="34" chg="U" gnbr="d41553_165_aq" gtype="WD" key="W0317651" pagenbr="011" revdate="TODOTODO" sectnbr="28" sheetnbr="01" subjnbr="50"><effect effrg="378378 387388 394394 400401 409410 420424 429433 438439 441442 451451 453455 461461 463463 470470 473474 476476 487487 492496 500500 504505 509509 511513 516519 522523 527527" />
                 <title>D41553/165/AQ</title></sheet></graphic>
 
 			</subject>
@@ -29,16 +29,16 @@
 	</chapter>
 	<eqiplist key="W0000012" chg="R" revdate="20090201">
 		<eqrow chg="R" key="W0000013" revdate="20090201"><ein>A 0756B</ein></eqrow>
-		<eqrow key="W0000014" chg="x" revdate="TODOTODO">
+		<eqrow key="W0000014" chg="U" revdate="TODOTODO">
 			<ein />
 		</eqrow>
 	</eqiplist>
 	<extwlist key="W0000015" chg="R" revdate="20090201">
-		<extwrow key="W0000016" chg="x" revdate="TODOTODO">
+		<extwrow key="W0000016" chg="U" revdate="TODOTODO">
 			<from />
 			<to />
 		</extwrow>
-		<extwrow key="W0000017" chg="x" revdate="TODOTODO">
+		<extwrow key="W0000017" chg="U" revdate="TODOTODO">
 			<from>
 				<hotlink targetid="913526" targetrefid="HOOK-UP LIST SERIES P 0400, 20071101" />
 			</from>
@@ -48,7 +48,7 @@
 			<from />
 			<to />
 		</extwrow>
-		<extwrow key="W0000018" chg="x" revdate="TODOTODO">
+		<extwrow key="W0000018" chg="U" revdate="TODOTODO">
 			<from />
 			<to />
 		</extwrow>

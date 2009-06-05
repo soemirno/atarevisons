@@ -1,116 +1,117 @@
 package net.soemirno.atarevisions
 
-import collection.mutable.HashSet
+import collection.mutable.HashMap
+import collection.mutable.Map
 import java.io.File
 import org.slf4j.LoggerFactory
-import xml.Elem
-import scala.actors.Actor._
 
 object Starter {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   def main(args: Array[String]) {
     logger.info("start comparing")
-    compare(new File(args(0)), new File(args(1)), new File(args(2)))
-  }
 
-  def compare(curr: File, prev: File, resultSource: File) = {
+    val changes = AtaElement(new File(args(0))).diff(AtaElement(new File(args(1))))
 
-    val changes = AtaElement(curr).diff(AtaElement(prev))
-
-    val checks = AtaElement(resultSource).revisionIndicators
-
-    for (check <- checks.values) {
-      if (check.changeType != "U" && !changes.contains(check.key))
-        logger.info("not found: " + check.key + "," + check.changeType)
-    }
-
-    logger.info("--- Changes ---")
-    for (change: RevisionIndicator <- changes.values) {
+    for (change: RevisionIndicator <- changes.values)
       logger.info("detected: " + change.key + "," + change.changeType)
 
-      if (!checks.contains(change.key))
-        logger.info("missing: " + change.key + "," + change.changeType)
+    if (args.length == 3) {
 
-      else if (change.changeType != checks(change.key).changeType)
-        logger.info("expected: " + change.key + "," + checks(change.key).changeType)
+      val checks = AtaElement(new File(args(2))).revisionIndicators
+
+      for (check <- checks.values) {
+        if (check.changeType != "U" && !changes.contains(check.key))
+          logger.info("not found: " + check.key + "," + check.changeType)
+      }
+
+      logger.info("--- Changes ---")
+      for (change: RevisionIndicator <- changes.values) {
+        if (!checks.contains(change.key))
+          logger.info("missing: " + change.key + "," + change.changeType)
+
+        else if (change.changeType != checks(change.key).changeType)
+          logger.info("expected: " + change.key + "," + checks(change.key).changeType)
+      }
     }
-  }  
+  }
 }
 
 object AtaElement {
-
   def apply(sourceFile: File) = {
-    val document: Elem = {
-      if (isValid(sourceFile))
-        xml.XML loadFile (sourceFile)
-      else
-        throw new IllegalArgumentException("use valid xml file")
+    val document = xml.XML loadFile (sourceFile)
+    val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@key" != "")
+
+    val list = HashMap[String, RevisionIndicator]()
+    for (element <- elementsContainingRevInd) {
+      val rev = RevisionIndicator(element)
+      list += Pair(rev.key, rev)
     }
 
-    val revIndicators = {
-      val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@key" != "")
-      val list = new RevisionIndicators
-
-      for (element <- elementsContainingRevInd)
-        list.add (RevisionIndicator(element))
-
-      list
-    }
-
-    new AtaElement(revIndicators)
-  }
-
-  def isValid(sourceFile: File): Boolean = {
-    if (sourceFile == null) return false
-    sourceFile exists
+    new AtaElement(list)
   }
 
 }
 
-class AtaElement(revIndicators: RevisionIndicators) {
+class AtaElement(revIndicators: collection.mutable.Map[String, RevisionIndicator]) {
   val logger = LoggerFactory.getLogger(this.getClass)
 
-  def revisionIndicators(): RevisionIndicators = revIndicators
+  def revisionIndicators(): Map[String, RevisionIndicator] = revIndicators
 
-  def diff(previous: AtaElement): RevisionIndicators = {
-    val result = new RevisionIndicators
+  def diff(previous: AtaElement): Map[String, RevisionIndicator] = {
+    val result = new HashMap[String, RevisionIndicator]
     val previousIndicators = previous.revisionIndicators
 
-    result ++ findChanges ( previousIndicators)
-    result ++ findDeleted ( previousIndicators)
+    result ++ findChanges(previousIndicators)
+    result ++ findDeleted(previousIndicators)
 
-    return result
+    return rolledUpResults(result)
   }
 
+  def rolledUpResults(result: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
+    logger.info("rollup results")
+    var foundChange = true
 
-  def findDeleted(prevChanges: RevisionIndicators): RevisionIndicators = {
-    val result = new RevisionIndicators
-    logger.info("finding deleted keys")
-
-    for (rev <- prevChanges.values) {
-
-      if (!revIndicators.contains(rev.key()))
-        result add (RevisionIndicator("D", rev))
+    while (foundChange) {
+      foundChange = false
+      for (rev <- result.values if rev.changeType() == "U") {
+        for (child <- rev.child if (child \ "@chg" != "")) {
+          if (result((child \ "@key").text).changeType != "U") {
+            logger.info("rolling up " + rev.key)
+            foundChange = true
+            result += Pair(rev.key, RevisionIndicator("R", rev))
+          }
+        }
+      }
     }
 
     return result
   }
 
-  def findChanges(prevChanges: RevisionIndicators): RevisionIndicators =  {
-    val result = new RevisionIndicators
+  def findDeleted(prevChanges: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
+    val result = new HashMap[String, RevisionIndicator]
+    logger.info("finding deleted keys")
+
+    for (rev <- prevChanges.values if !revIndicators.contains(rev.key()))
+      result += Pair(rev.key, RevisionIndicator("D", rev))
+
+    return result
+  }
+
+  def findChanges(prevChanges: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
+    val result = new HashMap[String, RevisionIndicator]
     logger.info("finding changed keys")
 
     for (rev <- revIndicators.values) {
 
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result add (RevisionIndicator("N", rev))
-      
-      else if (rev isSameAs (prevChanges(rev.key)))
-        result add (RevisionIndicator("U", rev))
+        result += Pair(rev.key, RevisionIndicator("N", rev))
+
+      else if (rev isSameAs prevChanges(rev.key))
+        result += Pair(rev.key, RevisionIndicator("U", rev))
 
       else
-        result add (RevisionIndicator("R", rev))
+        result += Pair(rev.key, RevisionIndicator("R", rev))
     }
     return result
   }
