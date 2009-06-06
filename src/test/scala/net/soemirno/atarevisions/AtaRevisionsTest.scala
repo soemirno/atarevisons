@@ -1,6 +1,7 @@
 package net.soemirno.atarevisions
 
 import java.io.File
+import collection.mutable.Map
 import org.scalatest.junit.JUnit3Suite
 
 class AtaRevisionsTest extends JUnit3Suite {
@@ -11,9 +12,10 @@ class AtaRevisionsTest extends JUnit3Suite {
 
   def testHasRevisedElements() = {
 
-    val changes = AtaManual(CURRENT_SOURCE).diff(AtaManual(PREVIOUS_SOURCE))
+    val changes = AtaManual(CURRENT_SOURCE).diff(AtaManual(PREVIOUS_SOURCE), "20090601")
     val expectedList = AtaManual(RESULT_SOURCE).revisionIndicators
 
+    println(AtaManualWriter.updateRevisionIndicators(changes(""), changes))
     for (expected <- expectedList.values) {
       if (!changes.contains(expected.key))
         fail("not found: " + expected.key + "," + expected.changeType)

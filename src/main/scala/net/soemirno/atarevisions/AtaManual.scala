@@ -29,7 +29,7 @@ object AtaManual {
   }
   
   private def mapElements(document : Node) :Map[String, RevisionIndicator] = {
-    val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@key" != "")
+    val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@chg" != "")
     val map = HashMap[String, RevisionIndicator]()
 
     //place all key elements in a hashmap
@@ -53,20 +53,20 @@ class AtaManual(revIndicators: Map[String, RevisionIndicator]) {
   /**
    * Compare manuals
    */
-  def diff(previous: AtaManual): Map[String, RevisionIndicator] = {
+  def diff(previous: AtaManual, revDate :String): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
     val previousIndicators = previous.revisionIndicators
 
-    result ++ findChanges(previousIndicators)
-    result ++ findDeleted(previousIndicators)
+    result ++ findChanges(previousIndicators, revDate)
+    result ++ findDeleted(previousIndicators, revDate)
 
-    return rolledUpResults(result)
+    return rolledUpResults(result, revDate)
   }
 
   /**
    *  make sure parent elements reflect changes in children
    */
-  def rolledUpResults(result: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
+  def rolledUpResults(result: Map[String, RevisionIndicator], revDate :String): Map[String, RevisionIndicator] = {
     logger.info("rollup results")
     var foundChange = true
 
@@ -77,7 +77,7 @@ class AtaManual(revIndicators: Map[String, RevisionIndicator]) {
           if (result((child \ "@key").text).changeType != "U") {
             logger.info("rolling up " + rev.key)
             foundChange = true
-            result += Pair(rev.key, new RevisionIndicator(rev.key, "R", rev))
+            result += Pair(rev.key, new RevisionIndicator(rev.key, "R", revDate, rev))
           }
         }
       }
@@ -89,12 +89,12 @@ class AtaManual(revIndicators: Map[String, RevisionIndicator]) {
   /**
    * Find elements removed in this revision
    */
-  def findDeleted(prevChanges: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
+  def findDeleted(prevChanges: Map[String, RevisionIndicator], revDate :String): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
     logger.info("finding deleted elements")
 
     for (rev <- prevChanges.values if !revIndicators.contains(rev.key()))
-      result += Pair(rev.key, new RevisionIndicator(rev.key, "D", rev))
+      result += Pair(rev.key, new RevisionIndicator(rev.key, "D", revDate, rev))
 
     return result
   }
@@ -102,20 +102,20 @@ class AtaManual(revIndicators: Map[String, RevisionIndicator]) {
   /**
    * Find elements changed in this revision
    */
-  def findChanges(prevChanges: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
+  def findChanges(prevChanges: Map[String, RevisionIndicator], revDate :String): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
     logger.info("finding changed elements")
 
     for (rev <- revIndicators.values) {
 
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result += Pair(rev.key, new RevisionIndicator(rev.key, "N", rev))
+        result += Pair(rev.key, new RevisionIndicator(rev.key, "N", revDate, rev))
 
       else if (rev isSameAs prevChanges(rev.key))
-        result += Pair(rev.key, new RevisionIndicator(rev.key, "U", rev))
+        result += Pair(rev.key, new RevisionIndicator(rev.key, "U", prevChanges(rev.key).revdate, rev))
 
       else
-        result += Pair(rev.key, new RevisionIndicator(rev.key, "R", rev))
+        result += Pair(rev.key, new RevisionIndicator(rev.key, "R", revDate, rev))
     }
     return result
   }

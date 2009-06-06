@@ -5,12 +5,14 @@ import xml._
 /**
  *  responsible for tracking changes on elements
  */
-class RevisionIndicator(key: String, changeType: String, elem: Elem) extends
+class RevisionIndicator(key: String, changeType: String, date: String, elem: Elem) extends
       Elem(elem.prefix, elem.label, elem.attributes, elem.scope, elem.child: _*) {
 
   def this(node: Node) = {
-    this((node\ "@key").text, (node \"@chg").text, node.asInstanceOf[Elem])
+    this((node\ "@key").text, (node \"@chg").text, (node \"@revdate").text, node.asInstanceOf[Elem])
   }
+
+  def revdate() : String = date
   
   def key(): String = key
 

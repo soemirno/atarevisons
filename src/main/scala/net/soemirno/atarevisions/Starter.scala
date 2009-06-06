@@ -12,14 +12,18 @@ object Starter {
   def main(args: Array[String]) {
     logger.info("start comparing")
 
-    val changes = AtaManual(new File(args(0))).diff(AtaManual(new File(args(1))))
+    val changes = AtaManual(new File(args(1))).diff(AtaManual(new File(args(2))), args(0))
+
+    logger.info("start write revised document")
+    scala.xml.XML.saveFull(args(0) + ".xml", AtaManualWriter.updateRevisionIndicators(changes(""), changes), "UTF-8", true, null)
+    logger.info("finished write revised document")
 
     for (change: RevisionIndicator <- changes.values)
       logger.debug("detected: " + change.key + "," + change.changeType)
 
-    if (args.length == 3) {
+    if (args.length == 4) {
 
-      val checks = AtaManual(new File(args(2))).revisionIndicators
+      val checks = AtaManual(new File(args(3))).revisionIndicators
 
       for (check <- checks.values) {
         if (check.changeType != "U" && !changes.contains(check.key))
