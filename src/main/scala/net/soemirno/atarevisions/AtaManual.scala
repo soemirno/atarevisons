@@ -4,64 +4,55 @@ import collection.mutable.HashMap
 import collection.mutable.Map
 import java.io.File
 import org.slf4j.LoggerFactory
+import xml.Node
 
-object Starter {
-  val logger = LoggerFactory.getLogger(this.getClass)
-
-  def main(args: Array[String]) {
-    logger.info("start comparing")
-
-    val changes = AtaElement(new File(args(0))).diff(AtaElement(new File(args(1))))
-
-    for (change: RevisionIndicator <- changes.values)
-      logger.info("detected: " + change.key + "," + change.changeType)
-
-    if (args.length == 3) {
-
-      val checks = AtaElement(new File(args(2))).revisionIndicators
-
-      for (check <- checks.values) {
-        if (check.changeType != "U" && !changes.contains(check.key))
-          logger.info("not found: " + check.key + "," + check.changeType)
-      }
-
-      logger.info("--- Changes ---")
-      for (change: RevisionIndicator <- changes.values) {
-        if (!checks.contains(change.key))
-          logger.info("missing: " + change.key + "," + change.changeType)
-
-        else if (change.changeType != checks(change.key).changeType)
-          logger.info("expected: " + change.key + "," + checks(change.key).changeType)
-      }
-    }
-  }
-}
-
+/**
+ * factory methods for AtaManual
+ */
 object AtaManual {
-
+  val logger = LoggerFactory.getLogger(this.getClass)
+  
   /**
-   *
+   *  Construct manual from source file  
    */
   def apply(sourceFile: File) = {
+    
+    logger.info("start loading " + sourceFile)
     val document = xml.XML loadFile (sourceFile)
+    logger.info("finished loading " + sourceFile)
+    
+    logger.info("start mapping key to elements")    
+    val map = mapElements(document)
+    logger.info("finished mapping key to elements")
+    
+    new AtaManual(map)
+  }
+  
+  private def mapElements(document : Node) :Map[String, RevisionIndicator] = {
     val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@key" != "")
+    val map = HashMap[String, RevisionIndicator]()
 
-    val list = HashMap[String, RevisionIndicator]()
+    //place all key elements in a hashmap
     for (element <- elementsContainingRevInd) {
-      val rev = RevisionIndicator(element)
-      list += Pair(rev.key, rev)
+      val rev = new RevisionIndicator(element)
+      map += Pair(rev.key, rev)
     }
-
-    new AtaManual(list)
+    return map
   }
 
 }
 
-class AtaManual(revIndicators: collection.mutable.Map[String, RevisionIndicator]) {
+/**
+ * represents manual to be compared to or with
+ */
+class AtaManual(revIndicators: Map[String, RevisionIndicator]) {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   def revisionIndicators(): Map[String, RevisionIndicator] = revIndicators
 
+  /**
+   * Compare manuals
+   */
   def diff(previous: AtaManual): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
     val previousIndicators = previous.revisionIndicators
@@ -86,7 +77,7 @@ class AtaManual(revIndicators: collection.mutable.Map[String, RevisionIndicator]
           if (result((child \ "@key").text).changeType != "U") {
             logger.info("rolling up " + rev.key)
             foundChange = true
-            result += Pair(rev.key, RevisionIndicator("R", rev))
+            result += Pair(rev.key, new RevisionIndicator(rev.key, "R", rev))
           }
         }
       }
@@ -103,7 +94,7 @@ class AtaManual(revIndicators: collection.mutable.Map[String, RevisionIndicator]
     logger.info("finding deleted elements")
 
     for (rev <- prevChanges.values if !revIndicators.contains(rev.key()))
-      result += Pair(rev.key, RevisionIndicator("D", rev))
+      result += Pair(rev.key, new RevisionIndicator(rev.key, "D", rev))
 
     return result
   }
@@ -118,13 +109,13 @@ class AtaManual(revIndicators: collection.mutable.Map[String, RevisionIndicator]
     for (rev <- revIndicators.values) {
 
       if (!prevChanges.contains(rev.key()) || prevChanges(rev.key()).changeType == "D")
-        result += Pair(rev.key, RevisionIndicator("N", rev))
+        result += Pair(rev.key, new RevisionIndicator(rev.key, "N", rev))
 
       else if (rev isSameAs prevChanges(rev.key))
-        result += Pair(rev.key, RevisionIndicator("U", rev))
+        result += Pair(rev.key, new RevisionIndicator(rev.key, "U", rev))
 
       else
-        result += Pair(rev.key, RevisionIndicator("R", rev))
+        result += Pair(rev.key, new RevisionIndicator(rev.key, "R", rev))
     }
     return result
   }
