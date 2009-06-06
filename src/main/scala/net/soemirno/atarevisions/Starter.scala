@@ -15,7 +15,8 @@ object Starter {
     val changes = AtaManual(new File(args(1)), true).diff(AtaManual(new File(args(2)), false), args(0))
 
     logger.info("start write revised document")
-    scala.xml.XML.saveFull(args(0) + ".xml", AtaManualWriter.updateRevisionIndicators(changes(""), changes), "UTF-8", true, null)
+    //assumes root element has key "" 
+    changes("").writeToFile(args(0) + ".xml", changes)
     logger.info("finished write revised document")
 
     for (change: RevisionIndicator <- changes.values)

@@ -15,7 +15,8 @@ class AtaRevisionsTest extends JUnit3Suite {
     val changes = AtaManual(CURRENT_SOURCE, true).diff(AtaManual(PREVIOUS_SOURCE, false), "20090601")
     val expectedList = AtaManual(RESULT_SOURCE, false).revisionIndicators
 
-    println(AtaManualWriter.updateRevisionIndicators(changes(""), changes))
+    changes("").writeToFile(new File(FIXTURES_FOLDER, "test.xml").getAbsolutePath , changes)
+    
     for (expected <- expectedList.values) {
       if (!changes.contains(expected.key))
         fail("not found: " + expected.key + "," + expected.changeType)

@@ -1,6 +1,8 @@
 package net.soemirno.atarevisions
 
 import xml._
+import collection.mutable.Map
+import transform.RewriteRule
 
 /**
  *  responsible for tracking changes on elements
@@ -17,6 +19,13 @@ class RevisionIndicator(key: String, changeType: String, date: String, elem: Ele
   def key(): String = key
 
   def changeType(): String = changeType
+
+  def writeToFile(fileName :String, updatedRevisionIndicators: Map[String, RevisionIndicator]) = {
+    if (updatedRevisionIndicators.isEmpty)
+      scala.xml.XML.saveFull(fileName, this, "UTF-8", true, null)
+    else
+      scala.xml.XML.saveFull(fileName, updateRevisionIndicators(updatedRevisionIndicators), "UTF-8", true, null)
+  }
 
   /**
    *  return true if actual content is the same (ignore some metadata and whitespace)
@@ -59,6 +68,35 @@ class RevisionIndicator(key: String, changeType: String, date: String, elem: Ele
       res = (isSame(ita.next, itb.next))
     }
     !ita.hasNext && !itb.hasNext && res
+  }
+
+  /**
+   * updates all chg and revdate attributes with values from revisionMap
+   */
+  def updateRevisionIndicators(revisionMap: Map[String, RevisionIndicator]): Elem = {
+
+    val updateRevisionIndicators = new RewriteRule {
+      override def transform(n: Node) = n match {
+        case e: Elem if ((e \ "@chg").text != "") => {
+
+          val key = (e \ "@key").text
+          val change = new UnprefixedAttribute("chg", revisionMap(key).changeType, xml.Null)
+          val revdate = new UnprefixedAttribute("revdate", revisionMap(key).revdate, xml.Null)
+          val attributes = e.attributes.
+                  remove("chg").
+                  remove("revdate").
+                  append(change).
+                  append(revdate)
+
+          Elem(e.prefix, e.label, attributes, e.scope, e.child: _*)
+        }
+
+        case _ => n
+      }
+    }
+    val n = new CustomRuleTransformer(updateRevisionIndicators).transform(this)
+    Elem(this.prefix, this.label, this.attributes, this.scope, n.first.child.toList: _*)
+
   }
 
 }
