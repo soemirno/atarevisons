@@ -15,26 +15,26 @@ object AtaManual {
   /**
    *  Construct manual from source file  
    */
-  def apply(sourceFile: File) = {
+  def apply(sourceFile: File, noRevdate : Boolean) = {
     
     logger.info("start loading " + sourceFile)
     val document = xml.XML loadFile (sourceFile)
     logger.info("finished loading " + sourceFile)
     
     logger.info("start mapping key to elements")    
-    val map = mapElements(document)
+    val map = mapElements(document, noRevdate)
     logger.info("finished mapping key to elements")
     
     new AtaManual(map)
   }
   
-  private def mapElements(document : Node) :Map[String, RevisionIndicator] = {
+  private def mapElements(document : Node, noRevdate : Boolean) :Map[String, RevisionIndicator] = {
     val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@chg" != "")
     val map = HashMap[String, RevisionIndicator]()
 
     //place all key elements in a hashmap
     for (element <- elementsContainingRevInd) {
-      val rev = new RevisionIndicator(element)
+      val rev = new RevisionIndicator(element, noRevdate)
       map += Pair(rev.key, rev)
     }
     return map

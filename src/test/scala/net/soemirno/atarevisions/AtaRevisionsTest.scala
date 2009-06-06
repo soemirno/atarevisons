@@ -12,8 +12,8 @@ class AtaRevisionsTest extends JUnit3Suite {
 
   def testHasRevisedElements() = {
 
-    val changes = AtaManual(CURRENT_SOURCE).diff(AtaManual(PREVIOUS_SOURCE), "20090601")
-    val expectedList = AtaManual(RESULT_SOURCE).revisionIndicators
+    val changes = AtaManual(CURRENT_SOURCE, true).diff(AtaManual(PREVIOUS_SOURCE, false), "20090601")
+    val expectedList = AtaManual(RESULT_SOURCE, false).revisionIndicators
 
     println(AtaManualWriter.updateRevisionIndicators(changes(""), changes))
     for (expected <- expectedList.values) {
