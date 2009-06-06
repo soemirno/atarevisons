@@ -37,7 +37,11 @@ object Starter {
   }
 }
 
-object AtaElement {
+object AtaManual {
+
+  /**
+   *
+   */
   def apply(sourceFile: File) = {
     val document = xml.XML loadFile (sourceFile)
     val elementsContainingRevInd = (document \\ "_").filter(e => e \ "@key" != "")
@@ -48,17 +52,17 @@ object AtaElement {
       list += Pair(rev.key, rev)
     }
 
-    new AtaElement(list)
+    new AtaManual(list)
   }
 
 }
 
-class AtaElement(revIndicators: collection.mutable.Map[String, RevisionIndicator]) {
+class AtaManual(revIndicators: collection.mutable.Map[String, RevisionIndicator]) {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   def revisionIndicators(): Map[String, RevisionIndicator] = revIndicators
 
-  def diff(previous: AtaElement): Map[String, RevisionIndicator] = {
+  def diff(previous: AtaManual): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
     val previousIndicators = previous.revisionIndicators
 
@@ -68,6 +72,9 @@ class AtaElement(revIndicators: collection.mutable.Map[String, RevisionIndicator
     return rolledUpResults(result)
   }
 
+  /**
+   *  make sure parent elements reflect changes in children
+   */
   def rolledUpResults(result: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
     logger.info("rollup results")
     var foundChange = true
@@ -88,9 +95,12 @@ class AtaElement(revIndicators: collection.mutable.Map[String, RevisionIndicator
     return result
   }
 
+  /**
+   * Find elements removed in this revision
+   */
   def findDeleted(prevChanges: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
-    logger.info("finding deleted keys")
+    logger.info("finding deleted elements")
 
     for (rev <- prevChanges.values if !revIndicators.contains(rev.key()))
       result += Pair(rev.key, RevisionIndicator("D", rev))
@@ -98,9 +108,12 @@ class AtaElement(revIndicators: collection.mutable.Map[String, RevisionIndicator
     return result
   }
 
+  /**
+   * Find elements changed in this revision
+   */
   def findChanges(prevChanges: Map[String, RevisionIndicator]): Map[String, RevisionIndicator] = {
     val result = new HashMap[String, RevisionIndicator]
-    logger.info("finding changed keys")
+    logger.info("finding changed elements")
 
     for (rev <- revIndicators.values) {
 
